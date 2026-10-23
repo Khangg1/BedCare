@@ -419,6 +419,7 @@
               <input id="searchInput" type="search" placeholder="Tìm mã giường, phòng, bệnh nhân..." aria-label="Tìm giường, phòng hoặc bệnh nhân">
             </label>
             <select class="select" id="departmentFilter" aria-label="Lọc theo khoa"><option value="">Tất cả khoa</option></select>
+            <select class="select" id="roomFilter" aria-label="Lọc theo phòng"><option value="">Tất cả phòng</option></select>
             <select class="select" id="statusFilter" aria-label="Lọc theo trạng thái">
               <option value="">Tất cả trạng thái</option><option value="available">Còn trống</option><option value="occupied">Đang sử dụng</option><option value="cleaning">Đang vệ sinh</option>
             </select>
@@ -630,13 +631,31 @@
       return currentUserRole === "admin" ? "tất cả các khoa" : currentUserDepartment || "khoa được phân quyền";
     }
 
+    function populateRoomFilter() {
+      const filter = document.getElementById("roomFilter");
+      const selectedRoom = filter.value;
+      const department = document.getElementById("departmentFilter").value;
+      const rooms = [...new Set(beds
+        .filter(bed => !department || bed.department === department)
+        .map(bed => (bed.room || "").trim())
+        .filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, "vi", { numeric: true }));
+      filter.innerHTML = `<option value="">Tất cả phòng</option>${rooms.map(room =>
+        `<option value="${escapeHtml(room)}">${escapeHtml(room)}</option>`
+      ).join("")}`;
+      if (rooms.includes(selectedRoom)) filter.value = selectedRoom;
+    }
+
     function render() {
       const department = document.getElementById("departmentFilter").value;
+      populateRoomFilter();
+      const room = document.getElementById("roomFilter").value;
       const status = document.getElementById("statusFilter").value;
       const type = document.getElementById("typeFilter").value;
       const query = document.getElementById("searchInput").value.trim().toLocaleLowerCase("vi");
       const filtered = beds.filter(bed =>
         (!department || bed.department === department) &&
+        (!room || (bed.room || "").trim() === room) &&
         (!status || bed.status === status) &&
         (!type || bed.type === type) &&
         (!query || `${bed.code} ${bed.department} ${bed.room || ""} ${bedPatients(bed).join(" ")}`.toLocaleLowerCase("vi").includes(query))
@@ -1164,7 +1183,11 @@
     });
 
     document.getElementById("searchInput").addEventListener("input", render);
-    document.getElementById("departmentFilter").addEventListener("change", render);
+    document.getElementById("departmentFilter").addEventListener("change", () => {
+      document.getElementById("roomFilter").value = "";
+      render();
+    });
+    document.getElementById("roomFilter").addEventListener("change", render);
     document.getElementById("statusFilter").addEventListener("change", render);
     document.getElementById("typeFilter").addEventListener("change", render);
     document.getElementById("addBedButton").addEventListener("click", () => openModal());
