@@ -17,7 +17,9 @@
     .app { min-height: 100vh; display: flex; }
     .sidebar { width: 248px; flex: 0 0 248px; padding: 25px 16px 20px; background: white; border-right: 1px solid var(--line); }
     .brand { display: flex; align-items: center; gap: 11px; padding: 0 10px 31px; }
-    .brand-mark { width: 39px; height: 39px; display: grid; place-items: center; border-radius: 13px; color: white; background: linear-gradient(145deg,#4b8bf2,#2865d4); font-size: 23px; font-weight: 700; }
+    .brand-mark { width: 39px; height: 39px; flex: 0 0 39px; display: grid; place-items: center; overflow: hidden; padding: 0; border: 0; border-radius: 13px; color: white; background: linear-gradient(145deg,#4b8bf2,#2865d4); font-size: 23px; font-weight: 700; cursor: pointer; }
+    .brand-mark img { width: 100%; height: 100%; object-fit: cover; }
+    .brand-mark:focus-visible { outline: 3px solid #9dbdf5; outline-offset: 3px; }
     .brand-name { font-size: 18px; font-weight: 750; letter-spacing: -.5px; }
     .brand-name span { color: var(--blue); }
     .brand-caption { color: var(--muted); font-size: 11px; }
@@ -29,13 +31,54 @@
     .topbar { height: 73px; display: flex; align-items: center; justify-content: space-between; padding: 0 34px; border-bottom: 1px solid var(--line); background: white; }
     .breadcrumbs { color: var(--muted); font-size: 12px; }
     .breadcrumbs strong { color: var(--ink); }
-    .date { color: var(--muted); font-size: 12px; }
+    .date { padding: 5px 9px; border-radius: 7px; color: #245cae; background: #edf4ff; font-size: 13px; font-weight: 700; }
     .content { max-width: 1500px; margin: auto; padding: 29px 34px 45px; }
     .heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 22px; }
     h1 { margin: 0 0 5px; font-size: 24px; letter-spacing: -.65px; }
     .heading p { margin: 0; color: var(--muted); font-size: 13px; }
     .button { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 15px; border-radius: 9px; color: white; background: var(--blue); text-decoration: none; font-weight: 650; }
     .stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 15px; margin-bottom: 20px; }
+    .kpi-section { margin-bottom: 20px; }
+    .kpi-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 0 0 11px; }
+    .kpi-heading h2 { margin: 0; font-size: 17px; }
+    .kpi-heading p { margin: 0; color: var(--muted); font-size: 11px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 13px; }
+    .kpi-card { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: white; box-shadow: 0 8px 28px rgba(35,62,98,.055); }
+    .kpi-label { color: #687990; font-size: 11px; font-weight: 600; }
+    .kpi-value { margin-top: 8px; color: var(--ink); font-size: 27px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .kpi-note { margin-top: 7px; color: var(--muted); font-size: 10px; line-height: 1.45; }
+    .kpi-card.occupancy .kpi-value { color: var(--blue); }
+    .kpi-card.admissions .kpi-value { color: #3978d8; }
+    .kpi-card.discharges .kpi-value { color: #188b65; }
+    .kpi-card.stay .kpi-value { color: #bd7a1e; }
+    .chart-panel { margin: 0 0 20px; padding: 19px 20px; border: 1px solid var(--line); border-radius: 13px; background: white; box-shadow: 0 8px 28px rgba(35,62,98,.055); }
+    .chart-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+    .chart-heading h2 { margin: 0; font-size: 15px; }
+    .chart-heading p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
+    .chart-legend { display: flex; flex-wrap: wrap; gap: 12px; color: #687990; font-size: 11px; }
+    .chart-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .chart-legend-dot { width: 9px; height: 9px; border-radius: 50%; background: #3978e8; }
+    .chart-legend-dot.discharges { background: #24a77a; }
+    .month-chart { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 10px; min-height: 190px; padding: 8px 0 0; border-bottom: 1px solid var(--line); }
+    .month-chart-column { display: grid; grid-template-rows: 1fr auto; gap: 8px; min-width: 0; text-align: center; }
+    .month-chart-bars { display: flex; align-items: flex-end; justify-content: center; gap: 7px; min-height: 145px; padding-top: 20px; }
+    .month-bar { position: relative; width: min(24px, 32%); min-width: 8px; min-height: 3px; border-radius: 5px 5px 0 0; background: #3978e8; transition: height .25s ease; }
+    .month-bar.discharges { background: #24a77a; }
+    .month-bar-value { position: absolute; top: -18px; left: 50%; color: #536783; font-size: 10px; font-weight: 700; transform: translateX(-50%); }
+    .month-chart-label { padding-bottom: 7px; color: #687990; font-size: 10px; font-weight: 600; }
+    .chart-empty { display: grid; min-height: 170px; place-items: center; color: var(--muted); text-align: center; font-size: 12px; }
+    .type-stats { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 15px; margin-bottom: 20px; }
+    .type-card { padding: 18px; border: 1px solid var(--line); border-radius: 13px; background: white; box-shadow: 0 8px 28px rgba(35,62,98,.055); }
+    .type-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+    .type-card-heading h2 { margin: 0; font-size: 16px; }
+    .type-total { padding: 4px 9px; border-radius: 20px; color: #245cae; background: var(--blue-soft); font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .type-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+    .type-metric { min-width: 0; padding: 11px; border-radius: 9px; background: #f6f8fc; }
+    .type-metric.available { background: var(--green-soft); }
+    .type-metric-label { color: #687990; font-size: 11px; }
+    .type-metric-value { margin-top: 4px; color: var(--ink); font-size: 23px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; }
+    .type-metric.available .type-metric-value { color: #17734f; }
+    .type-card-note { margin-top: 10px; color: var(--muted); font-size: 11px; }
     .card, .panel { border: 1px solid var(--line); border-radius: 13px; background: white; box-shadow: 0 8px 28px rgba(35,62,98,.055); }
     .card { padding: 17px 18px; }
     .stat-label { color: var(--muted); font-size: 12px; }
@@ -44,18 +87,32 @@
     .panel { margin-bottom: 16px; padding: 19px 20px; }
     .panel h2 { margin: 0 0 4px; font-size: 15px; }
     .panel p { margin: 0 0 17px; color: var(--muted); font-size: 11px; }
-    .bars { display: grid; gap: 16px; }
-    .bar-row { display: grid; grid-template-columns: 140px 1fr 35px; align-items: center; gap: 12px; font-size: 11px; }
-    .track { height: 9px; overflow: hidden; border-radius: 10px; background: #eef2f7; }
-    .fill { height: 100%; border-radius: inherit; }
-    .fill.occupied { background: var(--blue); } .fill.available { background: var(--green); } .fill.cleaning { background: var(--orange); }
-    .value { color: var(--muted); text-align: right; }
+    .donut-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+    .donut-grid > .panel { min-width: 0; }
+    .status-chart-content { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: center; gap: 14px; padding: 8px 4px 12px; }
+    .status-donut { position: relative; width: min(220px, 100%); aspect-ratio: 1; display: grid; place-items: center; justify-self: center; border-radius: 50%; background: conic-gradient(#eef2f7 0deg 360deg); }
+    .status-donut::before { position: absolute; inset: 22%; border: 1px solid #edf1f7; border-radius: 50%; background: white; content: ""; }
+    .status-donut-center { position: relative; z-index: 1; display: grid; gap: 2px; text-align: center; }
+    .status-donut-total { color: var(--ink); font-size: 34px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+    .status-donut-caption { color: var(--muted); font-size: 11px; }
+    .status-legend { display: grid; gap: 12px; }
+    .status-legend-row { display: grid; grid-template-columns: 12px minmax(0,1fr) auto; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+    .status-legend-swatch { width: 10px; height: 10px; border-radius: 50%; background: var(--blue); }
+    .status-legend-swatch.available { background: var(--green); }
+    .status-legend-swatch.cleaning { background: var(--orange); }
+    .status-legend-swatch.single { background: #3978e8; }
+    .status-legend-swatch.double { background: #8b5cf6; }
+    .status-legend-label { color: #536783; font-size: 12px; font-weight: 650; }
+    .status-legend-count { color: var(--ink); font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .status-legend-percent { display: block; color: var(--muted); font-size: 10px; font-weight: 500; }
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; text-align: left; }
     th { padding: 10px 12px; border-bottom: 1px solid var(--line); color: #8b98ab; font-size: 10px; }
     td { padding: 12px; border-bottom: 1px solid #f0f3f7; color: #4d5e76; font-size: 11px; }
+    .datetime-highlight { display: inline-block; padding: 3px 7px; border-radius: 6px; color: #245cae; background: #edf4ff; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
     tbody tr:last-child td { border-bottom: 0; }
     .bed-name { color: var(--ink); font-weight: 650; }
+    .patient-name-highlight { color: #c62828; font-size: 14px; font-weight: 800; }
     .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 7px; border-radius: 20px; font-size: 9px; font-weight: 650; white-space: nowrap; }
     .badge::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
     .badge.available { color: #188b65; background: var(--green-soft); } .badge.occupied { color: #3978d8; background: var(--blue-soft); } .badge.cleaning { color: #bd7a1e; background: var(--orange-soft); }
@@ -73,21 +130,22 @@
     .sync-status { color: var(--muted); font-size: 11px; }
     .sync-status.offline { color: #bd7a1e; }
     [hidden] { display: none !important; }
-    @media(max-width:1000px) { .sidebar { width: 210px; flex-basis: 210px; } .content { padding: 24px; } .topbar { padding: 0 24px; } .stats { grid-template-columns: repeat(2,minmax(0,1fr)); } }
-    @media(max-width:650px) { .sidebar { width: 60px; flex-basis: 60px; padding: 20px 8px; } .brand { padding: 0 0 24px; } .brand-copy,.nav-label,.nav-item span { display: none; } .nav-item { justify-content: center; padding: 0; } .content { padding: 20px 14px; } .topbar { height: 62px; padding: 0 14px; } .stats { gap: 9px; } .card { padding: 13px; } .stat-value { font-size: 23px; } .panel { padding: 15px; } .heading h1 { font-size: 21px; } .heading p { font-size: 11px; } .button { min-height: 36px; padding: 0 10px; font-size: 11px; } .bar-row { grid-template-columns: 95px 1fr 25px; gap: 8px; } }
-    @media(max-width:420px) { .sidebar { width: 60px; flex-basis: 60px; } .stats { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+    @media(max-width:1000px) { .sidebar { width: 210px; flex-basis: 210px; } .content { padding: 24px; } .topbar { padding: 0 24px; } .stats { grid-template-columns: repeat(2,minmax(0,1fr)); } .kpi-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .donut-grid { grid-template-columns: 1fr; } }
+    @media(max-width:650px) { .sidebar { width: 60px; flex-basis: 60px; padding: 20px 8px; } .brand { padding: 0 0 24px; } .brand-copy,.nav-label,.nav-item span { display: none; } .nav-item { justify-content: center; padding: 0; } .nav-item.his-link { font-size: 11px; font-weight: 700; } .nav-item.his-link span { display: inline; } .content { padding: 20px 14px; } .topbar { height: 62px; padding: 0 14px; } .stats { gap: 9px; } .card { padding: 13px; } .stat-value { font-size: 23px; } .panel { padding: 15px; } .heading h1 { font-size: 21px; } .heading p { font-size: 11px; } .button { min-height: 36px; padding: 0 10px; font-size: 11px; } .type-stats { gap: 10px; } .type-card { padding: 13px; } .type-metrics { gap: 6px; } .type-metric { padding: 8px; } .type-metric-label { font-size: 10px; } .type-metric-value { font-size: 20px; } .kpi-grid { gap: 9px; } .kpi-card { padding: 12px; } .kpi-value { font-size: 23px; } .kpi-heading { align-items: flex-start; flex-direction: column; } .chart-panel { padding: 15px; } .chart-heading { flex-direction: column; } .month-chart { gap: 4px; } .month-chart-bars { gap: 4px; } .status-chart-content { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; padding: 5px 0; } .status-donut { width: min(170px, 100%); } .status-donut-total { font-size: 28px; } .status-legend { gap: 8px; } .status-legend-row { gap: 7px; padding: 9px; } }
+    @media(max-width:420px) { .sidebar { width: 60px; flex-basis: 60px; } .stats { grid-template-columns: repeat(2,minmax(0,1fr)); } .type-stats { grid-template-columns: 1fr; } .kpi-grid { grid-template-columns: 1fr 1fr; } .kpi-card { padding: 10px; } .kpi-value { font-size: 21px; } .month-chart { gap: 2px; } .month-chart-bars { gap: 3px; } .month-chart-label { font-size: 9px; } }
   </style>
 </head>
 <body>
   <div class="app">
     <aside class="sidebar">
-      <div class="brand"><div class="brand-mark">+</div><div class="brand-copy"><div class="brand-name">Bed<span>Care</span></div><div class="brand-caption">Liên Chuyên Khoa</div></div></div>
+      <div class="brand"><button class="brand-mark" id="logoPickerButton" type="button" aria-label="Chọn ảnh logo" title="Bấm để chọn ảnh logo">+</button><input id="logoFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden><div class="brand-copy"><div class="brand-name">Bed<span>Care</span></div><div class="brand-caption" id="brandCaption">Liên Chuyên Khoa</div></div></div>
       <div class="nav-label">TỔNG QUAN</div>
       <a class="nav-item active" href="tong-quan.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg><span>Tổng quan</span></a>
       <a class="nav-item" href="quan-ly-giuong.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 19v-9m0 5h18v4M3 15h18v-3a2 2 0 0 0-2-2h-5v5"/><path d="M7 10h4a3 3 0 0 1 3 3v2H6v-3a2 2 0 0 1 1-2Z"/></svg><span>Quản lý giường</span></a>
       <div class="nav-label" style="margin-top:27px">HỆ THỐNG</div>
       <a class="nav-item" href="quan-ly-giuong.html#patients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 8v6m3-3h-6"/></svg><span>Bệnh nhân</span></a>
       <a class="nav-item" href="quan-ly-giuong.html#reports"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5m0 14h17"/><path d="m7 15 4-4 3 2 6-7"/></svg><span>Báo cáo</span></a>
+      <a class="nav-item his-link" href="https://yte-khanhhoa.vnpthis.vn/" target="_blank" rel="noopener noreferrer" aria-label="Mở hệ thống HIS trong tab mới" title="Mở hệ thống HIS"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg><span>HIS</span></a>
       <a class="nav-item" href="quan-ly-giuong.html#settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 0 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 0 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 0 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9Z"/></svg><span>Cài đặt</span></a>
     </aside>
     <main class="main">
@@ -101,11 +159,65 @@
           <article class="card"><div class="stat-label">Còn trống</div><div class="stat-value" id="availableBeds">0</div><div class="stat-note">Sẵn sàng tiếp nhận</div></article>
           <article class="card"><div class="stat-label">Đang vệ sinh</div><div class="stat-value" id="cleaningBeds">0</div><div class="stat-note">Chờ hoàn tất vệ sinh</div></article>
         </section>
-        <section class="panel"><h2>Tình hình giường và chỗ nằm</h2><p>Theo dõi số người đang nằm và số giường còn trống tại Liên Chuyên Khoa.</p>
-          <div class="bars" id="statusBars"></div>
+        <section class="type-stats" aria-label="Thống kê giường đơn và giường đôi">
+          <article class="type-card">
+            <div class="type-card-heading"><h2>Giường đơn</h2><span class="type-total" id="singleBedTotal">0 giường</span></div>
+            <div class="type-metrics">
+              <div class="type-metric"><div class="type-metric-label">Sức chứa</div><div class="type-metric-value" id="singleCapacity">0</div></div>
+              <div class="type-metric"><div class="type-metric-label">Đang nằm</div><div class="type-metric-value" id="singleOccupied">0</div></div>
+              <div class="type-metric available"><div class="type-metric-label">Chỗ còn trống</div><div class="type-metric-value" id="singleAvailable">0</div></div>
+            </div>
+            <div class="type-card-note" id="singleAvailableBeds">0 giường trống hoàn toàn</div>
+          </article>
+          <article class="type-card">
+            <div class="type-card-heading"><h2>Giường đôi</h2><span class="type-total" id="doubleBedTotal">0 giường</span></div>
+            <div class="type-metrics">
+              <div class="type-metric"><div class="type-metric-label">Sức chứa</div><div class="type-metric-value" id="doubleCapacity">0</div></div>
+              <div class="type-metric"><div class="type-metric-label">Đang nằm</div><div class="type-metric-value" id="doubleOccupied">0</div></div>
+              <div class="type-metric available"><div class="type-metric-label">Chỗ còn trống</div><div class="type-metric-value" id="doubleAvailable">0</div></div>
+            </div>
+            <div class="type-card-note" id="doubleAvailableBeds">0 giường trống hoàn toàn</div>
+          </article>
         </section>
+        <section class="kpi-section" aria-labelledby="kpiTitle">
+          <div class="kpi-heading"><h2 id="kpiTitle">Bảng theo dõi KPI</h2><p id="kpiPeriod"></p></div>
+          <div class="kpi-grid">
+            <article class="kpi-card occupancy"><div class="kpi-label">CÔNG SUẤT GIƯỜNG</div><div class="kpi-value" id="kpiOccupancy">—</div><div class="kpi-note" id="kpiOccupancyNote">Tỷ lệ chỗ nằm đang sử dụng</div></article>
+            <article class="kpi-card admissions"><div class="kpi-label">NHẬP VIỆN THÁNG NÀY</div><div class="kpi-value" id="kpiAdmissions">—</div><div class="kpi-note" id="kpiAdmissionsNote">Số lượt bắt đầu điều trị trong tháng</div></article>
+            <article class="kpi-card discharges"><div class="kpi-label">XUẤT VIỆN THÁNG NÀY</div><div class="kpi-value" id="kpiDischarges">—</div><div class="kpi-note" id="kpiDischargesNote">Số lượt kết thúc điều trị trong tháng</div></article>
+            <article class="kpi-card stay"><div class="kpi-label">THỜI GIAN NẰM TRUNG BÌNH</div><div class="kpi-value" id="kpiAverageStay">—</div><div class="kpi-note" id="kpiAverageStayNote">Tính trên các lượt đã xuất viện</div></article>
+          </div>
+        </section>
+        <section class="chart-panel" aria-labelledby="admissionChartTitle">
+          <div class="chart-heading">
+            <div><h2 id="admissionChartTitle">Biểu đồ lượt nhập viện và xuất viện</h2><p id="admissionChartDescription">So sánh số lượt theo 6 tháng gần nhất.</p></div>
+            <div class="chart-legend" aria-label="Chú thích biểu đồ">
+              <span class="chart-legend-item"><i class="chart-legend-dot"></i>Nhập viện</span>
+              <span class="chart-legend-item"><i class="chart-legend-dot discharges"></i>Xuất viện</span>
+            </div>
+          </div>
+          <div class="month-chart" id="admissionChart" role="img" aria-label="Biểu đồ lượt nhập viện và xuất viện trong sáu tháng gần nhất"></div>
+        </section>
+        <div class="donut-grid">
+          <section class="panel"><h2>Tình trạng giường</h2><p>Tỷ lệ số giường theo trạng thái hiện tại.</p>
+            <div class="status-chart-content">
+              <div class="status-donut" id="bedStatusDonut" role="img" aria-label="Biểu đồ tỷ lệ giường theo trạng thái">
+                <div class="status-donut-center"><span class="status-donut-total" id="statusDonutTotal">0</span><span class="status-donut-caption">tổng giường</span></div>
+              </div>
+              <div class="status-legend" id="bedStatusLegend"></div>
+            </div>
+          </section>
+          <section class="panel"><h2>Cơ cấu giường đơn và giường đôi</h2><p>Tỷ lệ số lượng từng loại giường trong danh sách.</p>
+            <div class="status-chart-content">
+              <div class="status-donut" id="bedTypeDonut" role="img" aria-label="Biểu đồ tỷ lệ giường đơn và giường đôi">
+                <div class="status-donut-center"><span class="status-donut-total" id="typeDonutTotal">0</span><span class="status-donut-caption">tổng giường</span></div>
+              </div>
+              <div class="status-legend" id="bedTypeLegend"></div>
+            </div>
+          </section>
+        </div>
         <section class="panel"><h2>Danh sách giường</h2><p id="bedDescription">Loại giường, sức chứa, trạng thái và bệnh nhân đang được sắp xếp.</p>
-          <div class="table-wrap"><table><thead><tr><th>TÊN / MÃ GIƯỜNG</th><th>LOẠI GIƯỜNG</th><th>BỆNH NHÂN</th><th>THỜI GIAN VÀO VIỆN</th><th>THỜI GIAN RA VIỆN</th><th>THỜI GIAN NẰM GIƯỜNG</th><th>TRẠNG THÁI</th><th>KHOA</th></tr></thead><tbody id="bedRows"></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>TÊN / MÃ GIƯỜNG</th><th>LOẠI GIƯỜNG</th><th>BỆNH NHÂN</th><th>PHÒNG</th><th>THỜI GIAN VÀO VIỆN</th><th>THỜI GIAN RA VIỆN</th><th>THỜI GIAN NẰM GIƯỜNG</th><th>TRẠNG THÁI</th><th>KHOA</th></tr></thead><tbody id="bedRows"></tbody></table></div>
         </section>
       </div>
     </main>
@@ -129,10 +241,54 @@
     const typeLabels = { single: "Giường đơn", double: "Giường đôi" };
     const bedPatients = bed => Array.isArray(bed.patients) ? bed.patients.filter(Boolean) : [bed.patient || ""].filter(Boolean);
     const bedCapacity = bed => bed.type === "double" || (!bed.type && bed.status === "double") ? 2 : 1;
-    const bedStorageKey = "bedcare-beds-v2";
+    const logoStorageKey = "bedcare-hospital-logo";
     let authMode = "login";
     function escapeHtml(value) {
       return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+    }
+    function renderLogo(dataUrl) {
+      const button = document.getElementById("logoPickerButton");
+      button.replaceChildren();
+      if (dataUrl) {
+        const image = document.createElement("img");
+        image.src = dataUrl;
+        image.alt = "";
+        button.append(image);
+      } else {
+        button.textContent = "+";
+      }
+    }
+    function selectLogo(fileInput) {
+      const file = fileInput.files[0];
+      if (!file) return;
+      if (!["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.type)) {
+        window.alert("Vui lòng chọn ảnh PNG, JPG, WebP hoặc GIF.");
+        fileInput.value = "";
+        return;
+      }
+      if (file.size > 1024 * 1024) {
+        window.alert("Ảnh logo cần có dung lượng tối đa 1 MB.");
+        fileInput.value = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          localStorage.setItem(logoStorageKey, reader.result);
+          renderLogo(reader.result);
+          window.alert("Đã cập nhật ảnh logo trên trình duyệt này.");
+        } catch (error) {
+          console.error("Không thể lưu ảnh logo:", error);
+          window.alert("Không thể lưu ảnh logo. Vui lòng kiểm tra dung lượng trình duyệt.");
+        }
+        fileInput.value = "";
+      };
+      reader.onerror = () => {
+        console.error("Không thể đọc tệp ảnh logo.");
+        window.alert("Không thể đọc ảnh đã chọn.");
+        fileInput.value = "";
+      };
+      reader.readAsDataURL(file);
     }
     function formatDateTime(value, fallback = "") {
       if (!value) return fallback;
@@ -163,52 +319,188 @@
       if (hours) return `${hours} giờ ${minutes} phút`;
       return `${minutes} phút`;
     }
-    function renderOverview(beds) {
+    function formatAverageStay(admissions) {
+      const durations = admissions
+        .filter(admission => admission.admittedAt && admission.dischargedAt)
+        .map(admission => {
+          const admittedAt = new Date(admission.admittedAt);
+          const dischargedAt = new Date(admission.dischargedAt);
+          return dischargedAt >= admittedAt ? dischargedAt - admittedAt : null;
+        })
+        .filter(duration => duration !== null);
+      if (!durations.length) return "—";
+      const averageMinutes = Math.floor(durations.reduce((sum, duration) => sum + duration, 0) / durations.length / 60000);
+      const days = Math.floor(averageMinutes / 1440);
+      const hours = Math.floor((averageMinutes % 1440) / 60);
+      return days ? `${days} ngày ${hours} giờ` : `${hours} giờ ${averageMinutes % 60} phút`;
+    }
+
+    function renderAdmissionChart(admissions, now) {
+      const chart = document.getElementById("admissionChart");
+      const description = document.getElementById("admissionChartDescription");
+      if (!admissions) {
+        chart.classList.remove("month-chart");
+        chart.innerHTML = '<div class="chart-empty">Đăng nhập để xem biểu đồ lịch sử nhập viện và xuất viện.</div>';
+        chart.setAttribute("aria-label", "Đăng nhập để xem biểu đồ lịch sử");
+        description.textContent = "Số liệu lịch sử sẽ hiển thị sau khi đăng nhập.";
+        return;
+      }
+
+      chart.classList.add("month-chart");
+      const months = Array.from({ length: 6 }, (_, index) =>
+        new Date(now.getFullYear(), now.getMonth() - 5 + index, 1)
+      );
+      const monthData = months.map(month => {
+        const countForMonth = value => {
+          if (!value) return 0;
+          const date = new Date(value);
+          return !Number.isNaN(date.getTime()) &&
+            date.getFullYear() === month.getFullYear() &&
+            date.getMonth() === month.getMonth();
+        };
+        return {
+          month,
+          admissions: admissions.filter(item => countForMonth(item.admittedAt)).length,
+          discharges: admissions.filter(item => countForMonth(item.dischargedAt)).length
+        };
+      });
+      const maxCount = Math.max(1, ...monthData.flatMap(item => [item.admissions, item.discharges]));
+      const monthFormatter = new Intl.DateTimeFormat("vi-VN", { month: "short" });
+      chart.innerHTML = monthData.map(item => {
+        const monthName = monthFormatter.format(item.month);
+        const admissionHeight = item.admissions ? Math.max(4, item.admissions / maxCount * 120) : 0;
+        const dischargeHeight = item.discharges ? Math.max(4, item.discharges / maxCount * 120) : 0;
+        return `<div class="month-chart-column" aria-label="${monthName}: ${item.admissions} lượt nhập viện, ${item.discharges} lượt xuất viện">
+          <div class="month-chart-bars">
+            <div class="month-bar" style="height:${admissionHeight}px" title="${item.admissions} lượt nhập viện tháng ${monthName}">${item.admissions ? `<span class="month-bar-value">${item.admissions}</span>` : ""}</div>
+            <div class="month-bar discharges" style="height:${dischargeHeight}px" title="${item.discharges} lượt xuất viện tháng ${monthName}">${item.discharges ? `<span class="month-bar-value">${item.discharges}</span>` : ""}</div>
+          </div>
+          <div class="month-chart-label">${monthName}</div>
+        </div>`;
+      }).join("");
+      chart.setAttribute("aria-label", monthData.map(item =>
+        `${monthFormatter.format(item.month)}: ${item.admissions} lượt nhập viện, ${item.discharges} lượt xuất viện`
+      ).join(". "));
+      description.textContent = "So sánh số lượt theo 6 tháng gần nhất.";
+    }
+
+    function renderDonutChart(donutId, totalId, legendId, items, total, emptyLabel) {
+      let angle = 0;
+      const segments = items.map(item => {
+        const start = angle;
+        angle += total ? item.count / total * 360 : 0;
+        return `${item.color} ${start}deg ${angle}deg`;
+      });
+      const donut = document.getElementById(donutId);
+      donut.style.background = total
+        ? `conic-gradient(${segments.join(", ")})`
+        : "conic-gradient(#eef2f7 0deg 360deg)";
+      donut.setAttribute("aria-label", total
+        ? items.map(item => `${item.label}: ${item.count} trên ${total} giường`).join(". ")
+        : emptyLabel);
+      document.getElementById(totalId).textContent = total;
+      document.getElementById(legendId).innerHTML = items.map(item => {
+        const percentage = total ? Math.round(item.count / total * 100) : 0;
+        return `<div class="status-legend-row"><span class="status-legend-swatch ${item.key}" aria-hidden="true"></span><span class="status-legend-label">${item.label}</span><span class="status-legend-count">${item.count}<span class="status-legend-percent">${percentage}%</span></span></div>`;
+      }).join("");
+    }
+
+    function renderKpis(beds, admissions) {
+      const now = new Date();
+      renderAdmissionChart(admissions, now);
+      document.getElementById("kpiPeriod").textContent = new Intl.DateTimeFormat("vi-VN", {
+        month: "long", year: "numeric"
+      }).format(now);
+      const occupied = beds.reduce((count, bed) => count + bedPatients(bed).length, 0);
+      const capacity = beds.reduce((count, bed) => count + bedCapacity(bed), 0);
+      document.getElementById("kpiOccupancy").textContent = `${capacity ? Math.round(occupied / capacity * 100) : 0}%`;
+      document.getElementById("kpiOccupancyNote").textContent = `${occupied}/${capacity} chỗ nằm đang sử dụng`;
+
+      if (!admissions) {
+        document.getElementById("kpiAdmissionsNote").textContent = "Đăng nhập để xem số liệu lịch sử";
+        document.getElementById("kpiDischargesNote").textContent = "Đăng nhập để xem số liệu lịch sử";
+        document.getElementById("kpiAverageStayNote").textContent = "Đăng nhập để xem số liệu lịch sử";
+        return;
+      }
+
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      const occurredThisMonth = value => {
+        if (!value) return false;
+        const date = new Date(value);
+        return !Number.isNaN(date.getTime()) && date >= monthStart && date < nextMonth;
+      };
+      const admissionCount = admissions.filter(admission => occurredThisMonth(admission.admittedAt)).length;
+      const dischargeCount = admissions.filter(admission => occurredThisMonth(admission.dischargedAt)).length;
+      const completedCount = admissions.filter(admission => admission.admittedAt && admission.dischargedAt).length;
+      document.getElementById("kpiAdmissions").textContent = admissionCount;
+      document.getElementById("kpiAdmissionsNote").textContent = `${admissionCount} lượt bắt đầu điều trị trong tháng`;
+      document.getElementById("kpiDischarges").textContent = dischargeCount;
+      document.getElementById("kpiDischargesNote").textContent = `${dischargeCount} lượt kết thúc điều trị trong tháng`;
+      document.getElementById("kpiAverageStay").textContent = formatAverageStay(admissions);
+      document.getElementById("kpiAverageStayNote").textContent = completedCount
+        ? `Trung bình trên ${completedCount} lượt đã xuất viện`
+        : "Chưa có lượt xuất viện để tính";
+    }
+
+    function renderOverview(beds, admissions = null) {
       const total = beds.length;
       const occupied = beds.reduce((count, bed) => count + bedPatients(bed).length, 0);
       const capacity = beds.reduce((count, bed) => count + bedCapacity(bed), 0);
       const available = beds.filter(bed => bed.status === "available").length;
       const cleaning = beds.filter(bed => bed.status === "cleaning").length;
+      const occupiedBedCount = beds.filter(bed => bed.status === "occupied").length;
       document.getElementById("totalBeds").textContent = total;
       document.getElementById("occupiedBeds").textContent = occupied;
       document.getElementById("availableBeds").textContent = available;
       document.getElementById("cleaningBeds").textContent = cleaning;
       document.getElementById("occupancyRate").textContent = `${capacity ? Math.round(occupied / capacity * 100) : 0}% công suất chỗ nằm`;
-      const statuses = [{ label: "Người đang nằm", count: occupied, key: "occupied" }, { label: "Giường còn trống", count: available, key: "available" }, { label: "Đang vệ sinh", count: cleaning, key: "cleaning" }];
-      document.getElementById("statusBars").innerHTML = statuses.map(item => `<div class="bar-row"><span>${item.label}</span><div class="track"><div class="fill ${item.key}" style="width:${item.key === "occupied" ? (capacity ? item.count / capacity * 100 : 0) : (total ? item.count / total * 100 : 0)}%"></div></div><span class="value">${item.count}</span></div>`).join("");
-      document.getElementById("bedRows").innerHTML = beds.length ? beds.map(bed => `<tr><td class="bed-name">${escapeHtml(bed.code)}</td><td>${escapeHtml(typeLabels[bed.type])} (${bedCapacity(bed)} người)</td><td>${escapeHtml(bedPatients(bed).join(", ") || "—")}</td><td>${escapeHtml(formatDateTime(bed.admittedAt, bed.since || "—"))}</td><td>${escapeHtml(formatDateTime(bed.dischargedAt, "—"))}</td><td>${escapeHtml(formatStayDuration(bed))}</td><td><span class="badge ${bed.status}">${statusLabels[bed.status]}</span></td><td>${escapeHtml(bed.department)}</td></tr>`).join("") : `<tr><td colspan="8"><div class="empty">Chưa có giường nào. Nhấn “Quản lý giường” để bắt đầu thêm dữ liệu.</div></td></tr>`;
-    }
-    function loadBeds() {
-      try {
-        const saved = localStorage.getItem(bedStorageKey);
-        if (!saved) return [];
-        const beds = JSON.parse(saved);
-        if (!Array.isArray(beds) || !beds.every(bed =>
-          bed && typeof bed.code === "string" && typeof bed.department === "string" &&
-          ["available", "occupied", "double", "cleaning"].includes(bed.status) &&
-          (bed.patient === undefined || typeof bed.patient === "string") &&
-          (bed.patients === undefined || Array.isArray(bed.patients) && bed.patients.every(patient => typeof patient === "string")) &&
-          (bed.type === undefined || ["single", "double"].includes(bed.type)) &&
-          (bed.admittedAt === undefined || typeof bed.admittedAt === "string") &&
-          (bed.dischargedAt === undefined || typeof bed.dischargedAt === "string")
-        )) throw new Error("Dữ liệu giường không hợp lệ.");
-        const normalized = beds.map(bed => {
-          const patients = bedPatients(bed);
-          const type = bed.type || (bed.status === "double" ? "double" : "single");
-          return { ...bed, type, status: bed.status === "double" ? (patients.length ? "occupied" : "available") : bed.status, patients };
-        });
-        if (normalized.some(bed => bedPatients(bed).length > bedCapacity(bed))) {
-          throw new Error("Số bệnh nhân vượt quá sức chứa của giường.");
-        }
-        return normalized;
-      } catch (error) {
-        console.error("Không thể đọc dữ liệu giường:", error);
-        document.getElementById("dataError").textContent = "Không thể đọc dữ liệu giường đã lưu. Hãy mở trang Quản lý giường để kiểm tra.";
-        document.getElementById("dataError").hidden = false;
-        return [];
-      }
+      renderKpis(beds, admissions);
+      ["single", "double"].forEach(type => {
+        const typeBeds = beds.filter(bed => bed.type === type);
+        const typeCapacity = typeBeds.reduce((count, bed) => count + bedCapacity(bed), 0);
+        const typeOccupied = typeBeds.reduce((count, bed) => count + bedPatients(bed).length, 0);
+        const typeAvailable = typeBeds.reduce((count, bed) => {
+          if (bed.status === "available") return count + bedCapacity(bed);
+          if (bed.status === "occupied") return count + Math.max(0, bedCapacity(bed) - bedPatients(bed).length);
+          return count;
+        }, 0);
+        const prefix = type === "single" ? "single" : "double";
+        document.getElementById(`${prefix}BedTotal`).textContent = `${typeBeds.length} giường`;
+        document.getElementById(`${prefix}Capacity`).textContent = typeCapacity;
+        document.getElementById(`${prefix}Occupied`).textContent = typeOccupied;
+        document.getElementById(`${prefix}Available`).textContent = typeAvailable;
+        document.getElementById(`${prefix}AvailableBeds`).textContent =
+          `${typeBeds.filter(bed => bed.status === "available").length} giường trống hoàn toàn`;
+      });
+      const bedStatuses = [
+        { label: "Đang sử dụng", count: occupiedBedCount, key: "occupied", color: "#3978e8" },
+        { label: "Còn trống", count: available, key: "available", color: "#24a77a" },
+        { label: "Đang vệ sinh", count: cleaning, key: "cleaning", color: "#e69a39" }
+      ];
+      renderDonutChart("bedStatusDonut", "statusDonutTotal", "bedStatusLegend",
+        bedStatuses, total, "Chưa có giường nào");
+      const singleCount = beds.filter(bed => bed.type === "single").length;
+      const doubleCount = beds.filter(bed => bed.type === "double").length;
+      renderDonutChart("bedTypeDonut", "typeDonutTotal", "bedTypeLegend", [
+        { label: "Giường đơn", count: singleCount, key: "single", color: "#3978e8" },
+        { label: "Giường đôi", count: doubleCount, key: "double", color: "#8b5cf6" }
+      ], total, "Chưa có giường nào");
+      document.getElementById("bedRows").innerHTML = beds.length ? beds.map(bed => `<tr><td class="bed-name">${escapeHtml(bed.code)}</td><td>${escapeHtml(typeLabels[bed.type])} (${bedCapacity(bed)} người)</td><td><span class="patient-name-highlight">${escapeHtml(bedPatients(bed).join(", ") || "—")}</span></td><td>${escapeHtml(bed.room || "—")}</td><td><span class="datetime-highlight">${escapeHtml(formatDateTime(bed.admittedAt, bed.since || "—"))}</span></td><td><span class="datetime-highlight">${escapeHtml(formatDateTime(bed.dischargedAt, "—"))}</span></td><td>${escapeHtml(formatStayDuration(bed))}</td><td><span class="badge ${bed.status}">${statusLabels[bed.status]}</span></td><td>${escapeHtml(bed.department)}</td></tr>`).join("") : `<tr><td colspan="9"><div class="empty">Chưa có giường nào. Nhấn “Quản lý giường” để bắt đầu thêm dữ liệu.</div></td></tr>`;
     }
     document.getElementById("todayDate").textContent = new Intl.DateTimeFormat("vi-VN", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date());
+    try {
+      renderLogo(localStorage.getItem(logoStorageKey));
+    } catch (error) {
+      console.error("Không thể tải ảnh logo:", error);
+    }
+    document.getElementById("logoPickerButton").addEventListener("click", () => {
+      document.getElementById("logoFileInput").click();
+    });
+    document.getElementById("logoFileInput").addEventListener("change", event => selectLogo(event.target));
+    window.addEventListener("storage", event => {
+      if (event.key === logoStorageKey) renderLogo(event.newValue);
+    });
     try {
       const name = localStorage.getItem("bedcare-hospital-name");
       if (name) document.getElementById("hospitalName").textContent = name;
@@ -216,8 +508,9 @@
       console.error("Không thể đọc cài đặt tên khoa:", error);
     }
 
-    renderOverview(loadBeds());
+    renderOverview([]);
     let unsubscribeBeds = null;
+    let unsubscribeMembership = null;
 
     function setSyncStatus(connected) {
       const status = document.getElementById("syncStatus");
@@ -226,7 +519,11 @@
     }
 
     async function loadRemoteOverview() {
-      renderOverview(await BedCareBackend.getBeds());
+      const [beds, admissions] = await Promise.all([
+        BedCareBackend.getBeds(),
+        BedCareBackend.getAdmissions()
+      ]);
+      renderOverview(beds, admissions);
     }
 
     function startRealtimeSync() {
@@ -246,16 +543,40 @@
       });
     }
 
+    async function startMembershipSync() {
+      if (unsubscribeMembership) unsubscribeMembership();
+      unsubscribeMembership = await BedCareBackend.subscribeToMembership(
+        () => window.location.reload(),
+        error => {
+          console.error("Không thể đồng bộ quyền tài khoản:", error);
+          setSyncStatus(false);
+          showAuthError(error);
+        }
+      );
+    }
+
     async function signInAndLoad() {
       const membership = await BedCareBackend.getMembership();
       if (!membership) {
         throw new Error("Tài khoản chưa được quản trị viên cấp quyền BedCare. Hãy gửi UUID tài khoản cho admin để được duyệt.");
+      }
+      if (membership.role === "member") {
+        document.getElementById("hospitalName").textContent = membership.department || "Khoa chưa được gán";
+        document.getElementById("brandCaption").textContent = membership.department || "Khoa chưa được gán";
+      } else {
+        document.getElementById("brandCaption").textContent = "Toàn bộ khoa";
       }
       await loadRemoteOverview();
       document.getElementById("authBackdrop").hidden = true;
       document.getElementById("logoutButton").hidden = false;
       setSyncStatus(true);
       startRealtimeSync();
+      try {
+        await startMembershipSync();
+      } catch (error) {
+        console.error("Không thể đăng ký đồng bộ quyền tài khoản:", error);
+        showAuthError(error);
+      }
     }
 
     function showAuthError(error) {
@@ -328,8 +649,10 @@
       try {
         if (unsubscribeBeds) unsubscribeBeds();
         unsubscribeBeds = null;
+        if (unsubscribeMembership) unsubscribeMembership();
+        unsubscribeMembership = null;
         await BedCareBackend.signOut();
-        renderOverview([]);
+        renderOverview([], null);
         document.getElementById("logoutButton").hidden = true;
         document.getElementById("authBackdrop").hidden = false;
       } catch (error) {

@@ -40,6 +40,7 @@
     return {
       code: row.code,
       department: row.department,
+      room: row.room || "",
       type: row.bed_type,
       status: row.status,
       patients: row.patients,
@@ -52,7 +53,8 @@
   function toRow(bed) {
     return {
       code: bed.code,
-      department: bed.department,
+      department: bed.department === "Liên Chuyên Khoa" ? "LCK" : bed.department,
+      room: bed.room || "",
       bed_type: bed.type,
       status: bed.status,
       patients: bed.patients || [],
@@ -68,7 +70,7 @@
     if (!user) return null;
     return unwrap(await client
       .from("hospital_members")
-      .select("user_id, role")
+      .select("user_id, role, department")
       .eq("user_id", user.id)
       .maybeSingle());
   }
@@ -77,6 +79,9 @@
     const membership = await getMembership();
     if (!membership) {
       throw new Error("Tài khoản chưa được cấp quyền sử dụng. Hãy nhờ quản trị viên thêm UUID vào hospital_members.");
+    }
+    if (membership.role === "member" && !membership.department) {
+      throw new Error("Tài khoản chưa được gán khoa. Hãy nhờ admin chọn khoa cho tài khoản trong mục Cài đặt.");
     }
     return membership;
   }
@@ -117,18 +122,30 @@
       await ensureAdmin();
       return unwrap(await getClient()
         .from("hospital_members")
-        .select("user_id, role, created_at")
+        .select("user_id, role, department, created_at")
         .order("created_at")).map(member => ({
           userId: member.user_id,
           role: member.role,
+          department: member.department,
           createdAt: member.created_at
         }));
     },
-    async addMember(userId) {
+    async addMember(userId, role, department) {
       await ensureAdmin();
       unwrap(await getClient()
         .from("hospital_members")
-        .insert({ user_id: userId, role: "member" }));
+        .insert({ user_id: userId, role, department: role === "admin" ? null : department }));
+    },
+    async updateMemberAccess(userId, role, department) {
+      const membership = await ensureAdmin();
+      const updated = unwrap(await getClient()
+        .from("hospital_members")
+        .update({ role, department: role === "admin" ? null : department })
+        .eq("user_id", userId)
+        .neq("user_id", membership.user_id)
+        .select("user_id")
+        .maybeSingle());
+      if (!updated) throw new Error("Không tìm thấy tài khoản hoặc bạn không được phép đổi quyền tài khoản đang đăng nhập.");
     },
     async removeMember(userId) {
       await ensureAdmin();
@@ -143,11 +160,38 @@
       await ensureMembership();
       return unwrap(await client
         .from("beds")
-        .select("code, department, bed_type, status, patients, since, admitted_at, discharged_at")
+        .select("code, department, room, bed_type, status, patients, since, admitted_at, discharged_at")
         .order("code")).map(toBed);
     },
-    async saveBed(bed) {
-      unwrap(await getClient().from("beds").upsert(toRow(bed), { onConflict: "code" }));
+    async getAdmissions() {
+      await ensureMembership();
+      return unwrap(await getClient()
+        .from("patient_admissions")
+        .select("id, bed_code, department, room, patient_name, admitted_at, discharged_at")
+        .order("admitted_at", { ascending: false })).map(admission => ({
+        id: admission.id,
+        bedCode: admission.bed_code,
+        department: admission.department,
+        room: admission.room || "",
+        patientName: admission.patient_name,
+        admittedAt: admission.admitted_at,
+        dischargedAt: admission.discharged_at
+      }));
+    },
+    async saveBed(bed, previousIdentity = null) {
+      const client = getClient();
+      if (previousIdentity) {
+        const updated = unwrap(await client
+          .from("beds")
+          .update(toRow(bed))
+          .eq("code", previousIdentity.code)
+          .eq("room", previousIdentity.room || "")
+          .select("code")
+          .maybeSingle());
+        if (!updated) throw new Error("Không tìm thấy giường cũ để cập nhật. Hãy tải lại dữ liệu.");
+        return;
+      }
+      unwrap(await client.from("beds").upsert(toRow(bed), { onConflict: "code,room" }));
     },
     async importBeds(beds) {
       const client = getClient();
@@ -156,10 +200,17 @@
       if (current.count > 0) {
         throw new Error("Database đã có giường. Không nhập bản sao lưu để tránh ghi đè dữ liệu đang dùng.");
       }
-      unwrap(await client.from("beds").upsert(beds.map(toRow), { onConflict: "code" }));
+      unwrap(await client.from("beds").upsert(beds.map(toRow), { onConflict: "code,room" }));
     },
-    async deleteBed(code) {
-      unwrap(await getClient().from("beds").delete().eq("code", code));
+    async deleteBed(code, room = "") {
+      const deleted = unwrap(await getClient()
+        .from("beds")
+        .delete()
+        .eq("code", code)
+        .eq("room", room)
+        .select("code")
+        .maybeSingle());
+      if (!deleted) throw new Error("Không tìm thấy giường cần xóa. Hãy tải lại dữ liệu.");
     },
     subscribeToBeds(onChange, onError) {
       const client = getClient();
@@ -173,6 +224,25 @@
         .subscribe(status => {
           if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
             onError(new Error(`Không thể kết nối đồng bộ realtime (${status}).`));
+          }
+        });
+      return () => client.removeChannel(channel);
+    },
+    async subscribeToMembership(onChange, onError) {
+      const client = getClient();
+      const { user } = unwrap(await client.auth.getUser());
+      if (!user) throw new Error("Cần đăng nhập để đồng bộ quyền tài khoản.");
+      const channel = client
+        .channel(`bedcare-membership-${user.id}`)
+        .on("postgres_changes", {
+          event: "*",
+          schema: "public",
+          table: "hospital_members",
+          filter: `user_id=eq.${user.id}`
+        }, onChange)
+        .subscribe(status => {
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            onError(new Error(`Không thể đồng bộ quyền tài khoản (${status}).`));
           }
         });
       return () => client.removeChannel(channel);

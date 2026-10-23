@@ -48,8 +48,11 @@
       width: 39px; height: 39px; border-radius: 13px; display: grid; place-items: center;
       color: white; background: linear-gradient(145deg, #4b8bf2, #2865d4);
       box-shadow: 0 7px 14px #3978e83b;
+      padding: 0; overflow: hidden; border: 0; cursor: pointer;
     }
     .brand-mark svg { width: 23px; height: 23px; }
+    .brand-mark img { width: 100%; height: 100%; object-fit: cover; }
+    .brand-mark:focus-visible { outline: 3px solid #9dbdf5; outline-offset: 3px; }
     .brand-name { font-size: 18px; font-weight: 750; letter-spacing: -.5px; }
     .brand-name span { color: var(--blue); }
     .brand-caption { color: var(--muted); font-size: 11px; margin-top: 1px; }
@@ -148,13 +151,25 @@
     .patient { display: flex; align-items: center; gap: 8px; min-height: 38px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #f0f3f7; }
     .patient-avatar { width: 27px; height: 27px; flex: 0 0 auto; display: grid; place-items: center; color: #58749f; background: #eef3fb; border-radius: 50%; font-size: 9px; font-weight: 700; }
     .patient-info { min-width: 0; }
-    .patient-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 600; }
-    .patient-meta { color: var(--muted); font-size: 9px; margin-top: 1px; }
+    .patient-name { color: #c62828; font-size: 14px; font-weight: 800; line-height: 1.3; overflow-wrap: anywhere; }
+    .patient-meta { color: #3978d8; font-size: 11px; font-weight: 650; margin-top: 2px; }
     .patient-list { display: grid; gap: 4px; min-width: 0; }
     .patient-row { display: flex; align-items: center; gap: 7px; min-width: 0; }
     .bed-capacity { margin-left: auto; color: var(--muted); font-size: 9px; white-space: nowrap; }
-    .bed-times { display: grid; gap: 3px; margin-top: 8px; color: var(--muted); font-size: 9px; }
+    .bed-times { display: grid; gap: 10px; margin-top: 10px; padding: 11px; border: 1px solid #dce9fb; border-left: 4px solid #3978e8; border-radius: 9px; background: #f5f8ff; }
+    .bed-time-row { display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 8px; }
+    .bed-time-label { color: #536783; font-size: 11px; font-weight: 700; }
+    .bed-time-value { display: grid; gap: 1px; color: #194f9c; font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.2; }
+    .bed-time-date { color: #63748e; font-size: 11px; font-weight: 550; }
+    .bed-time-row.duration { padding-top: 8px; border-top: 1px solid #dce9fb; }
+    .bed-time-row.duration .bed-time-value { color: #17734f; font-size: 14px; }
+    .data-table .datetime-highlight { display: inline-block; padding: 3px 7px; border-radius: 6px; color: #245cae; background: #edf4ff; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .patient-empty { color: #9aa6b6; font-size: 10px; }
+    .datetime-control { display: flex; gap: 7px; }
+    .datetime-control input { min-width: 0; flex: 1; }
+    .datetime-action { padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; color: #58749f; background: white; font-size: 10px; white-space: nowrap; }
+    .datetime-action:hover { border-color: #9dbdf5; color: var(--blue); }
+    .field-hint { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
     .empty-state { grid-column: 1/-1; padding: 45px 15px; text-align: center; color: var(--muted); font-size: 12px; }
     .panel-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10px; }
     .sync-status { display: flex; align-items: center; gap: 6px; }
@@ -212,7 +227,7 @@
     .data-table tbody tr:last-child td { border-bottom: 0; }
     .data-table tbody tr[data-bed-code] { cursor: pointer; }
     .data-table tbody tr[data-bed-code]:hover { background: #f8faff; }
-    .table-primary { color: var(--ink); font-weight: 650; }
+    .table-primary { color: #c62828; font-size: 15px; font-weight: 800; }
     .table-tools { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
     .table-tools .search { width: 250px; }
     .text-button { border: 0; padding: 0; color: var(--blue); background: transparent; font-size: 11px; font-weight: 650; }
@@ -231,6 +246,8 @@
     .member-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 9px; }
     .member-id { color: var(--ink); font-size: 11px; overflow-wrap: anywhere; }
     .member-role { margin-top: 4px; color: var(--muted); font-size: 10px; }
+    .member-department { display: grid; gap: 5px; color: var(--muted); font-size: 10px; }
+    .member-department select { min-width: 125px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); background: #fff; }
     .member-remove { flex: 0 0 auto; border: 0; color: #d14b4b; background: transparent; font-size: 11px; font-weight: 650; cursor: pointer; }
     @media (max-width: 1100px) {
       .sidebar { width: 215px; flex-basis: 215px; }
@@ -245,6 +262,8 @@
       .brand { padding: 0 0 25px; }
       .brand-copy, .nav-label, .nav-item span, .sidebar-bottom { display: none; }
       .nav-item { justify-content: center; width: 44px; padding: 0; }
+      .nav-item.his-link { font-size: 11px; font-weight: 700; }
+      .nav-item.his-link span { display: inline; }
       .main { width: calc(100% - 66px); }
       .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .panel-heading { align-items: flex-start; flex-direction: column; }
@@ -292,9 +311,10 @@
   <div class="app">
     <aside class="sidebar">
       <div class="brand">
-        <div class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
-        </div>
+        <button class="brand-mark" id="logoPickerButton" type="button" aria-label="Chọn ảnh logo" title="Bấm để chọn ảnh logo">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+        </button>
+        <input id="logoFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
         <div class="brand-copy">
           <div class="brand-name" id="brandName">Bed<span>Care</span></div>
           <div class="brand-caption" id="brandCaption">Hospital management</div>
@@ -317,20 +337,16 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5m0 14h17"/><path d="m7 15 4-4 3 2 6-7"/></svg>
         <span>Báo cáo</span>
       </button>
+      <a class="nav-item his-link" href="https://yte-khanhhoa.vnpthis.vn/" target="_blank" rel="noopener noreferrer" aria-label="Mở hệ thống HIS trong tab mới" title="Mở hệ thống HIS">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg>
+        <span>HIS</span>
+      </a>
       <div class="nav-label" style="margin-top:27px">HỆ THỐNG</div>
       <button class="nav-item" type="button" data-nav="settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 0 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 0 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 0 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9Z"/></svg>
         <span>Cài đặt</span>
       </button>
       <div class="sidebar-bottom">
-        <div class="help-card">
-          <div class="help-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.5 2.5 0 0 1 4.8.8c0 1.7-2.4 2-2.4 3.7M12 17h.01"/></svg>
-          </div>
-          <strong>Cần hỗ trợ?</strong>
-          <p>Đội ngũ hỗ trợ luôn sẵn sàng giúp bạn.</p>
-          <button type="button" id="helpButton">Liên hệ hỗ trợ →</button>
-        </div>
         <div class="profile">
           <div class="avatar">TT</div>
           <div><div class="profile-name">TÍN TRUNG
@@ -361,7 +377,7 @@
         <section class="page-heading">
           <div>
             <h1>Quản lý giường bệnh</h1>
-            <p>Theo dõi loại giường, sức chứa và bệnh nhân tại các khoa.</p>
+            <p id="departmentScopeDescription">Theo dõi loại giường, sức chứa và bệnh nhân tại khoa được phân quyền.</p>
           </div>
           <button class="primary-button" id="addBedButton" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 5v14M5 12h14"/></svg>
@@ -400,7 +416,7 @@
           <div class="filters">
             <label class="search">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-              <input id="searchInput" type="search" placeholder="Tìm mã giường, bệnh nhân..." aria-label="Tìm giường hoặc bệnh nhân">
+              <input id="searchInput" type="search" placeholder="Tìm mã giường, phòng, bệnh nhân..." aria-label="Tìm giường, phòng hoặc bệnh nhân">
             </label>
             <select class="select" id="departmentFilter" aria-label="Lọc theo khoa"><option value="">Tất cả khoa</option></select>
             <select class="select" id="statusFilter" aria-label="Lọc theo trạng thái">
@@ -430,12 +446,13 @@
       <form id="bedForm">
         <div class="form-field"><label for="bedCode">Tên / mã giường</label><input id="bedCode" name="code" required maxlength="40" placeholder="Ví dụ: Giường VIP 01"></div>
         <div class="form-field"><label for="bedDepartment">Khoa</label><select id="bedDepartment" name="department" required></select></div>
+        <div class="form-field"><label for="bedRoom">Phòng <span style="font-weight:400;color:#9aa6b6">(nếu có)</span></label><input id="bedRoom" name="room" list="roomOptions" maxlength="40" placeholder="Chọn hoặc nhập phòng"><datalist id="roomOptions"><option value="Phòng 01"><option value="Phòng 02"><option value="Phòng 03"><option value="Phòng 04"><option value="Phòng 05"><option value="Phòng 06"><option value="Phòng 07"><option value="Phòng 08"><option value="Phòng 09"><option value="Phòng 10"></datalist></div>
         <div class="form-field"><label for="bedType">Loại giường</label><select id="bedType" name="type"><option value="single">Giường đơn (1 người)</option><option value="double">Giường đôi (tối đa 2 người)</option></select></div>
         <div class="form-field"><label for="bedStatus">Trạng thái</label><select id="bedStatus" name="status"><option value="available">Còn trống</option><option value="occupied">Đang sử dụng</option><option value="cleaning">Đang vệ sinh</option></select></div>
         <div class="form-field" id="patientField"><label for="patientName">Tên bệnh nhân 1 <span style="font-weight:400;color:#9aa6b6">(nếu có)</span></label><input id="patientName" name="patient" maxlength="60" placeholder="Nhập tên bệnh nhân"></div>
         <div class="form-field" id="secondPatientField" hidden><label for="secondPatientName">Tên bệnh nhân 2 <span style="font-weight:400;color:#9aa6b6">(nếu có)</span></label><input id="secondPatientName" name="secondPatient" maxlength="60" placeholder="Nhập tên bệnh nhân thứ hai"></div>
-        <div class="form-field"><label for="admittedAt">Thời gian vào viện</label><input id="admittedAt" name="admittedAt" type="datetime-local"></div>
-        <div class="form-field"><label for="dischargedAt">Thời gian ra viện</label><input id="dischargedAt" name="dischargedAt" type="datetime-local"></div>
+        <div class="form-field"><label for="admittedAt">Thời gian vào viện</label><div class="datetime-control"><input id="admittedAt" name="admittedAt" type="datetime-local" step="60"><button class="datetime-action" type="button" data-time-action="now" data-target="admittedAt">Giờ hiện tại</button><button class="datetime-action" type="button" data-time-action="clear" data-target="admittedAt" aria-label="Xóa thời gian vào viện">×</button></div><p class="field-hint">Chọn ngày, giờ hoặc bấm “Giờ hiện tại”.</p></div>
+        <div class="form-field"><label for="dischargedAt">Thời gian ra viện</label><div class="datetime-control"><input id="dischargedAt" name="dischargedAt" type="datetime-local" step="60"><button class="datetime-action" type="button" data-time-action="now" data-target="dischargedAt">Giờ hiện tại</button><button class="datetime-action" type="button" data-time-action="clear" data-target="dischargedAt" aria-label="Xóa thời gian ra viện">×</button></div><p class="field-hint">Giờ ra viện phải bằng hoặc sau giờ vào viện.</p></div>
         <div class="modal-actions"><button class="delete-button" id="deleteBedButton" type="button" hidden>Xóa giường</button><button class="secondary-button" id="cancelModalButton" type="button">Hủy</button><button class="primary-button" type="submit">Lưu thông tin</button></div>
       </form>
     </section>
@@ -465,17 +482,23 @@
   <script src="supabase-config.js"></script>
   <script src="bedcare-backend.js"></script>
   <script>
-    const departments = ["Liên Chuyên Khoa"];
+    const departments = ["LCK", "Nội", "Ngoại", "Đông Y", "Cấp Cứu"];
     const storageKey = "bedcare-beds-v2";
     const hospitalNameKey = "bedcare-hospital-name";
-    let beds = loadBeds();
-    let localBedsForImport = beds.map(bed => ({ ...bed, patients: [...(bed.patients || [])] }));
+    const logoStorageKey = "bedcare-hospital-logo";
+    let beds = [];
+    let admissionHistory = [];
+    let localBedsForImport = [];
     let editingCode = null;
+    let editingRoom = null;
     let toastTimer;
     let currentPage = "beds";
     let backendConnected = false;
     let unsubscribeBeds = null;
+    let unsubscribeMembership = null;
     let currentUserRole = "member";
+    let currentUserDepartment = null;
+    let currentUserId = null;
     let authMode = "login";
 
     function loadBeds() {
@@ -485,7 +508,7 @@
         if (!saved) return [];
         const parsed = JSON.parse(saved);
         if (!Array.isArray(parsed) || !parsed.every(bed =>
-          bed && typeof bed.code === "string" && departments.includes(bed.department) &&
+          bed && typeof bed.code === "string" && (departments.includes(bed.department) || bed.department === "Liên Chuyên Khoa") &&
           ["available", "occupied", "double", "cleaning"].includes(bed.status) &&
           (bed.patient === undefined || typeof bed.patient === "string") &&
           (bed.patients === undefined || Array.isArray(bed.patients) && bed.patients.every(patient => typeof patient === "string")) &&
@@ -497,7 +520,14 @@
           const patients = Array.isArray(bed.patients) ? bed.patients : [bed.patient || ""];
           const type = bed.type || (bed.status === "double" ? "double" : "single");
           const status = bed.status === "double" ? (patients.some(Boolean) ? "occupied" : "available") : bed.status;
-          return { ...bed, type, status, patients, patient: undefined };
+          return {
+            ...bed,
+            department: bed.department === "Liên Chuyên Khoa" ? "LCK" : bed.department,
+            type,
+            status,
+            patients,
+            patient: undefined
+          };
         });
         if (normalized.some(bed => bed.patients.length > (bed.type === "double" ? 2 : 1))) {
           throw new Error("Invalid saved bed capacity");
@@ -543,6 +573,25 @@
         : new Intl.DateTimeFormat("vi-VN", { dateStyle: "short", timeStyle: "short" }).format(date);
     }
 
+    function formatDateTimeParts(value, fallback = "") {
+      if (!value) return { time: fallback, date: "" };
+      let date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
+        if (!match) return { time: fallback || value, date: "" };
+        date = new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]));
+      }
+      return {
+        time: new Intl.DateTimeFormat("vi-VN", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(date),
+        date: new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "long", year: "numeric" }).format(date)
+      };
+    }
+
+    function renderBedTime(label, value, fallback = "") {
+      const parts = formatDateTimeParts(value, fallback);
+      return `<div class="bed-time-row"><span class="bed-time-label">${escapeHtml(label)}</span><time class="bed-time-value" datetime="${escapeHtml(value || "")}">${escapeHtml(parts.time)}${parts.date ? `<span class="bed-time-date">${escapeHtml(parts.date)}</span>` : ""}</time></div>`;
+    }
+
     function getAdmissionDate(bed) {
       if (bed.admittedAt) {
         const date = new Date(bed.admittedAt);
@@ -577,6 +626,10 @@
       };
     }
 
+    function departmentScopeText() {
+      return currentUserRole === "admin" ? "tất cả các khoa" : currentUserDepartment || "khoa được phân quyền";
+    }
+
     function render() {
       const department = document.getElementById("departmentFilter").value;
       const status = document.getElementById("statusFilter").value;
@@ -586,12 +639,12 @@
         (!department || bed.department === department) &&
         (!status || bed.status === status) &&
         (!type || bed.type === type) &&
-        (!query || `${bed.code} ${bed.department} ${bedPatients(bed).join(" ")}`.toLocaleLowerCase("vi").includes(query))
+        (!query || `${bed.code} ${bed.department} ${bed.room || ""} ${bedPatients(bed).join(" ")}`.toLocaleLowerCase("vi").includes(query))
       );
       bedGrid.innerHTML = filtered.length ? filtered.map(bed => `
-        <article class="bed-card" data-code="${escapeHtml(bed.code)}" tabindex="0" role="button" aria-label="Cập nhật giường ${escapeHtml(bed.code)}">
+        <article class="bed-card" data-code="${escapeHtml(bed.code)}" data-room="${escapeHtml(bed.room || "")}" tabindex="0" role="button" aria-label="Cập nhật giường ${escapeHtml(bed.code)}${bed.room ? `, ${escapeHtml(bed.room)}` : ""}">
           <div class="bed-card-top">
-            <div><div class="bed-name">${escapeHtml(bed.code)}</div><div class="bed-room">${escapeHtml(bed.department)} · ${typeLabels[bed.type]}</div></div>
+            <div><div class="bed-name">${escapeHtml(bed.code)}</div><div class="bed-room">${escapeHtml(bed.department)}${bed.room ? ` · ${escapeHtml(bed.room)}` : ""} · ${typeLabels[bed.type]}</div></div>
             <span class="badge ${bed.status}">${statusLabels[bed.status]}</span>
           </div>
           <div class="patient">
@@ -599,7 +652,7 @@
               ? `<span class="patient-list">${bedPatients(bed).map(patient => `<span class="patient-row"><span class="patient-avatar">${escapeHtml(initials(patient))}</span><span class="patient-info"><span class="patient-name">${escapeHtml(patient)}</span><span class="patient-meta"> Đang điều trị</span></span></span>`).join("")}</span><span class="bed-capacity">${bedPatients(bed).length}/${bedCapacity(bed)} người</span>`
               : `<span class="patient-empty">${bed.status === "cleaning" ? "Đang chuẩn bị giường" : "Chưa có bệnh nhân"}</span>`}
           </div>
-          ${(bed.admittedAt || bed.since || bed.dischargedAt) ? `<div class="bed-times">${(bed.admittedAt || bed.since) ? `<span>Vào viện: ${escapeHtml(formatDateTime(bed.admittedAt, bed.since))}</span>` : ""}${bed.dischargedAt ? `<span>Ra viện: ${escapeHtml(formatDateTime(bed.dischargedAt))}</span>` : ""}<span>Thời gian nằm giường: ${escapeHtml(formatStayDuration(bed))}</span></div>` : ""}
+          ${(bed.admittedAt || bed.since || bed.dischargedAt) ? `<div class="bed-times">${(bed.admittedAt || bed.since) ? renderBedTime("Vào viện", bed.admittedAt || bed.since) : ""}${bed.dischargedAt ? renderBedTime("Ra viện", bed.dischargedAt) : ""}<div class="bed-time-row duration"><span class="bed-time-label">Thời gian nằm</span><span class="bed-time-value">${escapeHtml(formatStayDuration(bed))}</span></div></div>` : ""}
         </article>`).join("")
         : `<div class="empty-state">${beds.length ? "Không tìm thấy giường phù hợp. Hãy thử thay đổi bộ lọc." : "Chưa có giường nào. Nhấn “Thêm giường” để bắt đầu tạo danh sách của bạn."}</div>`;
 
@@ -615,15 +668,31 @@
       document.getElementById("footerCount").textContent = `Hiển thị ${filtered.length} trên ${total} giường`;
     }
 
+    function renderCurrentPatientRow({ bed, patient }) {
+      const admission = admissionHistory.find(item =>
+        item.bedCode === bed.code && item.room === (bed.room || "") &&
+        item.patientName === patient && !item.dischargedAt
+      );
+      const admittedAt = admission ? admission.admittedAt : bed.admittedAt;
+      const dischargedAt = admission ? admission.dischargedAt : bed.dischargedAt;
+      return `<tr data-bed-code="${escapeHtml(bed.code)}" data-room="${escapeHtml(bed.room || "")}" data-search="${escapeHtml(`${patient} ${bed.code} ${bed.department} ${bed.room || ""}`.toLocaleLowerCase("vi"))}"><td class="table-primary">${escapeHtml(patient)}</td><td>${escapeHtml(bed.code)} (${typeLabels[bed.type]})</td><td>${escapeHtml(bed.department)}</td><td>${escapeHtml(bed.room || "—")}</td><td><span class="datetime-highlight">${escapeHtml(formatDateTime(admittedAt, bed.since || "—"))}</span></td><td><span class="datetime-highlight">${escapeHtml(formatDateTime(dischargedAt, "—"))}</span></td><td>${escapeHtml(formatStayDuration({ ...bed, admittedAt, dischargedAt }))}</td><td><span class="badge ${bed.status}">${statusLabels[bed.status]}</span></td></tr>`;
+    }
+
     function renderPatients() {
       const patients = beds.flatMap(bed => bedPatients(bed).map(patient => ({ bed, patient })));
       return `
-        <section class="page-heading"><div><h1>Bệnh nhân</h1><p>Danh sách bệnh nhân đang được sắp xếp giường tại Liên Chuyên Khoa.</p></div><button class="primary-button" type="button" data-action="open-beds">Quản lý giường</button></section>
+        <section class="page-heading"><div><h1>Bệnh nhân</h1><p>Danh sách bệnh nhân đang được sắp xếp giường tại ${escapeHtml(departmentScopeText())}.</p></div><button class="primary-button" type="button" data-action="open-beds">Quản lý giường</button></section>
         <section class="panel page-panel">
           <h2 class="page-panel-title">Bệnh nhân đang điều trị</h2><p class="page-panel-subtitle">Chọn một dòng để cập nhật giường hoặc thông tin bệnh nhân.</p>
-          <div class="table-tools"><label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="patientSearch" type="search" placeholder="Tìm tên bệnh nhân, giường..." aria-label="Tìm bệnh nhân"></label><span class="result-count">${patients.length} bệnh nhân</span></div>
-          <div class="table-wrap"><table class="data-table"><thead><tr><th>BỆNH NHÂN</th><th>TÊN / MÃ GIƯỜNG</th><th>KHOA</th><th>THỜI GIAN VÀO VIỆN</th><th>THỜI GIAN RA VIỆN</th><th>THỜI GIAN NẰM GIƯỜNG</th><th>TRẠNG THÁI</th></tr></thead><tbody id="patientRows">
-            ${patients.length ? patients.map(({ bed, patient }) => `<tr data-bed-code="${escapeHtml(bed.code)}" data-search="${escapeHtml(`${patient} ${bed.code} ${bed.department}`.toLocaleLowerCase("vi"))}"><td class="table-primary">${escapeHtml(patient)}</td><td>${escapeHtml(bed.code)} (${typeLabels[bed.type]})</td><td>${escapeHtml(bed.department)}</td><td>${escapeHtml(formatDateTime(bed.admittedAt, bed.since || "—"))}</td><td>${escapeHtml(formatDateTime(bed.dischargedAt, "—"))}</td><td>${escapeHtml(formatStayDuration(bed))}</td><td><span class="badge ${bed.status}">${statusLabels[bed.status]}</span></td></tr>`).join("") : `<tr><td colspan="7"><div class="empty-state">Chưa có bệnh nhân. Chọn trạng thái “Đang sử dụng” và nhập tên bệnh nhân; giường đôi nhận tối đa 2 người.</div></td></tr>`}
+          <div class="table-tools"><label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="patientSearch" type="search" placeholder="Tìm tên bệnh nhân, giường, phòng..." aria-label="Tìm bệnh nhân"></label><span class="result-count">${patients.length} bệnh nhân</span></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>BỆNH NHÂN</th><th>TÊN / MÃ GIƯỜNG</th><th>KHOA</th><th>PHÒNG</th><th>THỜI GIAN VÀO VIỆN</th><th>THỜI GIAN RA VIỆN</th><th>THỜI GIAN NẰM GIƯỜNG</th><th>TRẠNG THÁI</th></tr></thead><tbody id="patientRows">
+            ${patients.length ? patients.map(renderCurrentPatientRow).join("") : `<tr><td colspan="8"><div class="empty-state">Chưa có bệnh nhân. Chọn trạng thái “Đang sử dụng” và nhập tên bệnh nhân; giường đôi nhận tối đa 2 người.</div></td></tr>`}
+          </tbody></table></div>
+        </section>
+        <section class="panel page-panel">
+          <h2 class="page-panel-title">Lịch sử các lượt nằm viện</h2><p class="page-panel-subtitle">Hệ thống tự lưu giờ vào/ra viện mỗi khi cập nhật bệnh nhân trên giường.</p>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>BỆNH NHÂN</th><th>TÊN / MÃ GIƯỜNG</th><th>KHOA</th><th>PHÒNG</th><th>THỜI GIAN VÀO VIỆN</th><th>THỜI GIAN RA VIỆN</th><th>TRẠNG THÁI</th></tr></thead><tbody>
+            ${admissionHistory.length ? admissionHistory.map(admission => `<tr><td class="table-primary">${escapeHtml(admission.patientName)}</td><td>${escapeHtml(admission.bedCode)}</td><td>${escapeHtml(admission.department)}</td><td>${escapeHtml(admission.room || "—")}</td><td><span class="datetime-highlight">${escapeHtml(formatDateTime(admission.admittedAt, "—"))}</span></td><td><span class="datetime-highlight">${escapeHtml(formatDateTime(admission.dischargedAt, "—"))}</span></td><td><span class="badge ${admission.dischargedAt ? "available" : "occupied"}">${admission.dischargedAt ? "Đã xuất viện" : "Đang điều trị"}</span></td></tr>`).join("") : `<tr><td colspan="7"><div class="empty-state">Chưa có lịch sử lượt nằm viện.</div></td></tr>`}
           </tbody></table></div>
         </section>`;
     }
@@ -638,7 +707,7 @@
       return `
         <section class="page-heading"><div><h1>Báo cáo</h1><p>Thống kê tình trạng sử dụng giường bệnh hiện tại.</p></div><button class="primary-button" type="button" data-action="export-report">Tải báo cáo CSV</button></section>
         <div class="overview-grid">
-          <article class="overview-stat"><div class="overview-stat-label">Tổng số giường</div><div class="overview-stat-value">${total}</div><div class="overview-stat-note">Liên Chuyên Khoa</div></article>
+          <article class="overview-stat"><div class="overview-stat-label">Tổng số giường</div><div class="overview-stat-value">${total}</div><div class="overview-stat-note">${escapeHtml(departmentScopeText())}</div></article>
           <article class="overview-stat"><div class="overview-stat-label">Công suất chỗ nằm</div><div class="overview-stat-value">${capacity ? Math.round(occupied / capacity * 100) : 0}%</div><div class="overview-stat-note">${occupied} trên ${capacity} chỗ nằm</div></article>
           <article class="overview-stat"><div class="overview-stat-label">Giường sẵn sàng</div><div class="overview-stat-value">${available}</div><div class="overview-stat-note">Có thể tiếp nhận bệnh nhân</div></article>
         </div>
@@ -646,7 +715,7 @@
           <div class="report-bars">${reports.map((item, index) => `<div class="report-row"><span>${item.label}</span><div class="report-track"><div class="report-fill ${item.status}" style="width:${index === 0 ? (capacity ? item.value / capacity * 100 : 0) : (total ? item.value / total * 100 : 0)}%"></div></div><span class="report-value">${item.value}</span></div>`).join("")}</div>
         </section>
         <section class="panel page-panel"><h2 class="page-panel-title">Chi tiết giường</h2><p class="page-panel-subtitle">Báo cáo bao gồm loại giường, sức chứa, trạng thái và bệnh nhân được gán cho từng giường.</p>
-          ${beds.length ? `<div class="table-wrap"><table class="data-table"><thead><tr><th>TÊN / MÃ GIƯỜNG</th><th>LOẠI GIƯỜNG</th><th>KHOA</th><th>TRẠNG THÁI</th><th>BỆNH NHÂN</th><th>THỜI GIAN VÀO VIỆN</th><th>THỜI GIAN RA VIỆN</th><th>THỜI GIAN NẰM GIƯỜNG</th></tr></thead><tbody>${beds.map(bed => `<tr data-bed-code="${escapeHtml(bed.code)}"><td class="table-primary">${escapeHtml(bed.code)}</td><td>${typeLabels[bed.type]} (${bedCapacity(bed)} người)</td><td>${escapeHtml(bed.department)}</td><td><span class="badge ${bed.status}">${statusLabels[bed.status]}</span></td><td>${escapeHtml(bedPatients(bed).join(", ") || "—")}</td><td>${escapeHtml(formatDateTime(bed.admittedAt, bed.since || "—"))}</td><td>${escapeHtml(formatDateTime(bed.dischargedAt, "—"))}</td><td>${escapeHtml(formatStayDuration(bed))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state">Chưa có dữ liệu giường để lập báo cáo.</div>`}
+          ${beds.length ? `<div class="table-wrap"><table class="data-table"><thead><tr><th>TÊN / MÃ GIƯỜNG</th><th>LOẠI GIƯỜNG</th><th>KHOA</th><th>PHÒNG</th><th>TRẠNG THÁI</th><th>BỆNH NHÂN</th><th>THỜI GIAN VÀO VIỆN</th><th>THỜI GIAN RA VIỆN</th><th>THỜI GIAN NẰM GIƯỜNG</th></tr></thead><tbody>${beds.map(bed => `<tr data-bed-code="${escapeHtml(bed.code)}" data-room="${escapeHtml(bed.room || "")}"><td class="table-primary">${escapeHtml(bed.code)}</td><td>${typeLabels[bed.type]} (${bedCapacity(bed)} người)</td><td>${escapeHtml(bed.department)}</td><td>${escapeHtml(bed.room || "—")}</td><td><span class="badge ${bed.status}">${statusLabels[bed.status]}</span></td><td>${escapeHtml(bedPatients(bed).join(", ") || "—")}</td><td><span class="datetime-highlight">${escapeHtml(formatDateTime(bed.admittedAt, bed.since || "—"))}</span></td><td><span class="datetime-highlight">${escapeHtml(formatDateTime(bed.dischargedAt, "—"))}</span></td><td>${escapeHtml(formatStayDuration(bed))}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state">Chưa có dữ liệu giường để lập báo cáo.</div>`}
         </section>`;
     }
 
@@ -664,9 +733,11 @@
           <div class="settings-note">Dữ liệu giường được đồng bộ qua Supabase. Tên cơ sở hiển thị được lưu riêng trên thiết bị này.</div><button class="primary-button" type="submit">Lưu cài đặt</button></form>
         </section>
         ${currentUserRole === "admin" ? `
-        <section class="panel page-panel"><h2 class="page-panel-title">Quản lý thành viên</h2><p class="page-panel-subtitle">Chỉ cấp quyền cho tài khoản đã được tạo trong Supabase Authentication. Thành viên có thể quản lý giường nhưng không thể cấp quyền cho người khác.</p>
+        <section class="panel page-panel"><h2 class="page-panel-title">Quản lý thành viên</h2><p class="page-panel-subtitle">Mỗi thành viên chỉ xem và quản lý giường thuộc khoa được gán. Admin có quyền trên tất cả khoa.</p>
           <form class="settings-form" id="memberForm"><div class="form-field"><label for="memberUuidInput">UUID tài khoản cần cấp quyền</label><input id="memberUuidInput" name="userId" required autocomplete="off" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
-          <button class="primary-button" id="addMemberButton" type="submit">Cấp quyền thành viên</button></form>
+          <div class="form-field"><label for="memberRoleInput">Vai trò</label><select id="memberRoleInput" name="role"><option value="member">Thành viên — một khoa</option><option value="admin">Admin — tất cả khoa</option></select></div>
+          <div class="form-field" id="newMemberDepartmentField"><label for="memberDepartmentInput">Khoa của tài khoản</label><select id="memberDepartmentInput" name="department" required>${departments.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("")}</select></div>
+          <button class="primary-button" id="addMemberButton" type="submit">Cấp quyền tài khoản</button></form>
           <div id="memberList" class="member-list" aria-live="polite">Đang tải danh sách thành viên...</div>
         </section>` : ""}`;
     }
@@ -680,7 +751,17 @@
         if (!container.isConnected) return;
         container.innerHTML = members.map(member => `
           <div class="member-row">
-            <div><div class="member-id">${escapeHtml(member.userId)}</div><div class="member-role">${member.role === "admin" ? "Quản trị viên" : "Thành viên"}</div></div>
+            <div><div class="member-id">${escapeHtml(member.userId)}</div><div class="member-role">${member.userId === currentUserId ? "Tài khoản đang đăng nhập" : member.role === "admin" ? "Quản trị viên" : "Thành viên"}</div></div>
+            <label class="member-department">Vai trò
+              <select data-member-role="${escapeHtml(member.userId)}" ${member.userId === currentUserId ? "disabled" : ""}>
+                <option value="member"${member.role === "member" ? " selected" : ""}>Thành viên</option>
+                <option value="admin"${member.role === "admin" ? " selected" : ""}>Admin</option>
+              </select>
+              <span data-member-department-field="${escapeHtml(member.userId)}"${member.role === "admin" ? " hidden" : ""}>Khoa
+                <select data-member-department="${escapeHtml(member.userId)}"${member.userId === currentUserId ? " disabled" : ""}>${departments.map(name => `<option value="${escapeHtml(name)}"${member.department === name ? " selected" : ""}>${escapeHtml(name)}</option>`).join("")}</select>
+              </span>
+              ${member.userId !== currentUserId ? `<button class="secondary-button" type="button" data-update-member="${escapeHtml(member.userId)}">Lưu quyền</button>` : ""}
+            </label>
             ${member.role === "member" ? `<button class="member-remove" type="button" data-remove-member="${escapeHtml(member.userId)}">Thu hồi quyền</button>` : ""}
           </div>`).join("") || `<div class="settings-note">Chưa có thành viên nào.</div>`;
       } catch (error) {
@@ -693,6 +774,8 @@
       event.preventDefault();
       const input = document.getElementById("memberUuidInput");
       const userId = input.value.trim();
+      const role = document.getElementById("memberRoleInput").value;
+      const department = document.getElementById("memberDepartmentInput").value;
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
         showToast("UUID không đúng định dạng.");
         return;
@@ -700,13 +783,30 @@
       const button = document.getElementById("addMemberButton");
       button.disabled = true;
       try {
-        await BedCareBackend.addMember(userId);
+        await BedCareBackend.addMember(userId, role, department);
         event.target.reset();
         await loadMembers();
-        showToast("Đã cấp quyền thành viên.");
+        showToast(`Đã cấp quyền ${role === "admin" ? "admin toàn khoa" : `thành viên khoa ${department}`}.`);
       } catch (error) {
         console.error("Không thể cấp quyền thành viên:", error);
         showToast(`Không thể cấp quyền: ${error.message}`);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function updateMemberAccess(userId, button) {
+      const role = document.querySelector(`[data-member-role="${CSS.escape(userId)}"]`)?.value;
+      const department = document.querySelector(`[data-member-department="${CSS.escape(userId)}"]`)?.value || null;
+      if (!role) return;
+      button.disabled = true;
+      try {
+        await BedCareBackend.updateMemberAccess(userId, role, department);
+        await loadMembers();
+        showToast(`Đã cập nhật quyền ${role === "admin" ? "admin toàn khoa" : `thành viên khoa ${department}`}.`);
+      } catch (error) {
+        console.error("Không thể cập nhật quyền tài khoản:", error);
+        showToast(`Không thể cập nhật quyền: ${error.message}`);
       } finally {
         button.disabled = false;
       }
@@ -732,6 +832,27 @@
       document.getElementById("brandCaption").textContent = "Quản lý giường bệnh";
     }
 
+    function renderLogo(dataUrl) {
+      const button = document.getElementById("logoPickerButton");
+      button.replaceChildren();
+      if (dataUrl) {
+        const image = document.createElement("img");
+        image.src = dataUrl;
+        image.alt = "";
+        button.append(image);
+      } else {
+        button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
+      }
+    }
+
+    function loadLogo() {
+      try {
+        renderLogo(localStorage.getItem(logoStorageKey));
+      } catch (error) {
+        console.error("Không thể tải ảnh logo:", error);
+      }
+    }
+
     function navigate(page) {
       const labels = { beds: "Giường bệnh", patients: "Bệnh nhân", reports: "Báo cáo", settings: "Cài đặt" };
       if (!labels[page]) return;
@@ -752,8 +873,8 @@
 
     function exportReport() {
       const rows = [
-        ["Tên / mã giường", "Loại giường", "Sức chứa", "Khoa", "Trạng thái", "Bệnh nhân", "Thời gian vào viện", "Thời gian ra viện", "Thời gian nằm giường"],
-        ...beds.map(bed => [bed.code, typeLabels[bed.type], bedCapacity(bed), bed.department, statusLabels[bed.status], bedPatients(bed).join("; "), formatDateTime(bed.admittedAt, bed.since || ""), formatDateTime(bed.dischargedAt), formatStayDuration(bed)])
+        ["Tên / mã giường", "Loại giường", "Sức chứa", "Khoa", "Phòng", "Trạng thái", "Bệnh nhân", "Thời gian vào viện", "Thời gian ra viện", "Thời gian nằm giường"],
+        ...beds.map(bed => [bed.code, typeLabels[bed.type], bedCapacity(bed), bed.department, bed.room || "", statusLabels[bed.status], bedPatients(bed).join("; "), formatDateTime(bed.admittedAt, bed.since || ""), formatDateTime(bed.dischargedAt), formatStayDuration(bed)])
       ];
       const csv = "\uFEFF" + rows.map(row => row.map(value =>
         `"${(/^[=+\-@\t\r]/.test(String(value)) ? "'" : "") + String(value).replace(/"/g, '""')}"`
@@ -779,6 +900,10 @@
       }
     }
 
+    function shouldShowLocalImport() {
+      return currentUserRole !== "admin" || beds.length !== 0 || localBedsForImport.length === 0;
+    }
+
     function setSyncStatus(connected) {
       const status = document.getElementById("syncStatus");
       status.textContent = connected ? "Đồng bộ realtime" : "Đang mất kết nối";
@@ -786,10 +911,15 @@
     }
 
     async function loadRemoteBeds() {
-      beds = await BedCareBackend.getBeds();
+      const [remoteBeds, remoteAdmissions] = await Promise.all([
+        BedCareBackend.getBeds(),
+        BedCareBackend.getAdmissions()
+      ]);
+      beds = remoteBeds;
+      admissionHistory = remoteAdmissions;
       render();
       if (currentPage !== "beds") navigate(currentPage);
-      document.getElementById("importLocalPanel").hidden = beds.length !== 0 || localBedsForImport.length === 0;
+      document.getElementById("importLocalPanel").hidden = shouldShowLocalImport();
     }
 
     function startRealtimeSync() {
@@ -809,20 +939,51 @@
       });
     }
 
+    async function startMembershipSync() {
+      if (unsubscribeMembership) unsubscribeMembership();
+      unsubscribeMembership = await BedCareBackend.subscribeToMembership(
+        () => window.location.reload(),
+        error => {
+          console.error("Không thể đồng bộ quyền tài khoản:", error);
+          setSyncStatus(false);
+          showToast(`Không thể đồng bộ quyền tài khoản: ${error.message}`);
+        }
+      );
+    }
+
     async function signInAndLoad() {
       const membership = await BedCareBackend.getMembership();
       if (!membership) {
         throw new Error("Tài khoản chưa được cấp quyền sử dụng. Hãy nhờ quản trị viên thêm UUID vào hospital_members.");
       }
       currentUserRole = membership.role;
-      document.getElementById("profileRole").textContent = currentUserRole === "admin" ? "Quản trị viên" : "Thành viên";
+      currentUserDepartment = membership.department || null;
+      currentUserId = membership.user_id;
+      if (currentUserRole === "admin" && localBedsForImport.length === 0) {
+        localBedsForImport = loadBeds().map(bed => ({ ...bed, patients: [...(bed.patients || [])] }));
+      }
+      if (currentUserRole === "member" && !currentUserDepartment) {
+        throw new Error("Tài khoản chưa được gán khoa. Hãy nhờ admin chọn khoa cho tài khoản trong mục Cài đặt.");
+      }
+      populateDepartments();
+      document.getElementById("profileRole").textContent = currentUserRole === "admin"
+        ? "Quản trị viên"
+        : `Thành viên · ${currentUserDepartment}`;
+      document.getElementById("departmentScopeDescription").textContent =
+        `Theo dõi loại giường, sức chứa và bệnh nhân tại ${departmentScopeText()}.`;
       await loadRemoteBeds();
       backendConnected = true;
       document.getElementById("authBackdrop").hidden = true;
       document.getElementById("logoutButton").hidden = false;
-      document.getElementById("importLocalPanel").hidden = beds.length !== 0 || localBedsForImport.length === 0;
+      document.getElementById("importLocalPanel").hidden = shouldShowLocalImport();
       setSyncStatus(true);
       startRealtimeSync();
+      try {
+        await startMembershipSync();
+      } catch (error) {
+        console.error("Không thể đăng ký đồng bộ quyền tài khoản:", error);
+        showToast(`Không thể đồng bộ quyền tài khoản: ${error.message}`);
+      }
     }
 
     async function initializeBackend() {
@@ -843,6 +1004,10 @@
     }
 
     async function importLocalBeds() {
+      if (currentUserRole !== "admin") {
+        showToast("Chỉ admin mới được nhập dữ liệu giường từ thiết bị.");
+        return;
+      }
       const localBeds = localBedsForImport;
       if (!localBeds.length) {
         showToast("Thiết bị này chưa có dữ liệu giường để nhập.");
@@ -868,20 +1033,29 @@
 
     function populateDepartments() {
       const filter = document.getElementById("departmentFilter");
-      filter.innerHTML = `<option value="">Tất cả khoa</option>${departments.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("")}`;
-      document.getElementById("bedDepartment").innerHTML = departments.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
+      const allowedDepartments = currentUserRole === "admin" || !currentUserDepartment
+        ? departments
+        : [currentUserDepartment];
+      filter.innerHTML = `${currentUserRole === "admin" || !currentUserDepartment ? `<option value="">Tất cả khoa</option>` : ""}${allowedDepartments.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("")}`;
+      filter.disabled = currentUserRole !== "admin" && Boolean(currentUserDepartment);
+      if (currentUserDepartment) filter.value = currentUserDepartment;
+      const bedDepartment = document.getElementById("bedDepartment");
+      bedDepartment.innerHTML = allowedDepartments.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
+      bedDepartment.disabled = currentUserRole !== "admin";
     }
 
     function openModal(bed = null) {
       editingCode = bed ? bed.code : null;
+      editingRoom = bed ? bed.room || "" : null;
       bedForm.reset();
-      document.getElementById("modalTitle").textContent = bed ? `Giường ${bed.code}` : "Thêm giường mới";
+      document.getElementById("modalTitle").textContent = bed ? `Giường ${bed.code}${bed.room ? ` · ${bed.room}` : ""}` : "Thêm giường mới";
       document.getElementById("modalDescription").textContent = bed ? "Cập nhật trạng thái và thông tin bệnh nhân." : "Nhập thông tin để thêm giường vào danh sách.";
       document.getElementById("bedCode").disabled = Boolean(bed);
       document.getElementById("bedCode").value = bed ? bed.code : "";
       document.getElementById("deleteBedButton").hidden = !bed;
       if (bed) {
         document.getElementById("bedDepartment").value = bed.department;
+        document.getElementById("bedRoom").value = bed.room || "";
         document.getElementById("bedType").value = bed.type;
         document.getElementById("bedStatus").value = bed.status;
         document.getElementById("patientName").value = bedPatients(bed)[0] || "";
@@ -906,6 +1080,7 @@
     function closeModal() {
       modalBackdrop.classList.remove("open");
       editingCode = null;
+      editingRoom = null;
     }
 
     function showToast(message) {
@@ -916,8 +1091,9 @@
       toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
     }
 
-    function showDuplicateWarning(code) {
-      document.getElementById("duplicateWarningMessage").textContent = `Tên giường "${code}" đã có trong danh sách. Vui lòng nhập tên giường khác.`;
+    function showDuplicateWarning(code, room = "") {
+      document.getElementById("duplicateWarningMessage").textContent =
+        `Mã giường "${code}" đã có trong ${room || "khu vực chưa gán phòng"}. Vui lòng nhập mã khác cho phòng này.`;
       duplicateWarning.classList.add("open");
       duplicateWarning.setAttribute("aria-hidden", "false");
       document.getElementById("closeDuplicateWarning").focus();
@@ -939,6 +1115,45 @@
     document.getElementById("todayDate").textContent = new Intl.DateTimeFormat("vi-VN", {
       weekday: "long", day: "2-digit", month: "2-digit", year: "numeric"
     }).format(new Date());
+    loadLogo();
+    document.getElementById("logoPickerButton").addEventListener("click", () => {
+      document.getElementById("logoFileInput").click();
+    });
+    document.getElementById("logoFileInput").addEventListener("change", event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (!["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.type)) {
+        showToast("Vui lòng chọn ảnh PNG, JPG, WebP hoặc GIF.");
+        event.target.value = "";
+        return;
+      }
+      if (file.size > 1024 * 1024) {
+        showToast("Ảnh logo cần có dung lượng tối đa 1 MB.");
+        event.target.value = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          localStorage.setItem(logoStorageKey, reader.result);
+          renderLogo(reader.result);
+          showToast("Đã cập nhật ảnh logo trên trình duyệt này.");
+        } catch (error) {
+          console.error("Không thể lưu ảnh logo:", error);
+          showToast("Không thể lưu ảnh logo. Vui lòng chọn ảnh nhỏ hơn hoặc kiểm tra dung lượng trình duyệt.");
+        }
+        event.target.value = "";
+      };
+      reader.onerror = () => {
+        console.error("Không thể đọc tệp ảnh logo.");
+        showToast("Không thể đọc ảnh đã chọn.");
+        event.target.value = "";
+      };
+      reader.readAsDataURL(file);
+    });
+    window.addEventListener("storage", event => {
+      if (event.key === logoStorageKey) renderLogo(event.newValue);
+    });
     render();
     navigate("beds");
     const requestedPage = window.location.hash.slice(1);
@@ -965,33 +1180,40 @@
     document.getElementById("bedStatus").addEventListener("change", updatePatientFields);
     document.getElementById("patientName").addEventListener("input", updatePatientFields);
     document.getElementById("secondPatientName").addEventListener("input", updatePatientFields);
+    document.querySelectorAll("[data-time-action]").forEach(button => {
+      button.addEventListener("click", () => {
+        const input = document.getElementById(button.dataset.target);
+        input.value = button.dataset.timeAction === "now" ? currentDateTimeValue() : "";
+        input.focus();
+      });
+    });
     bedGrid.addEventListener("click", event => {
       const card = event.target.closest(".bed-card");
       if (!card) return;
-      openModal(beds.find(bed => bed.code === card.dataset.code));
+      openModal(beds.find(bed => bed.code === card.dataset.code && (bed.room || "") === card.dataset.room));
     });
     bedGrid.addEventListener("keydown", event => {
       if ((event.key === "Enter" || event.key === " ") && event.target.matches(".bed-card")) {
         event.preventDefault();
-        openModal(beds.find(bed => bed.code === event.target.dataset.code));
+        openModal(beds.find(bed => bed.code === event.target.dataset.code && (bed.room || "") === event.target.dataset.room));
       }
     });
     document.getElementById("closeModalButton").addEventListener("click", closeModal);
     document.getElementById("cancelModalButton").addEventListener("click", closeModal);
     document.getElementById("deleteBedButton").addEventListener("click", async () => {
-      if (!editingCode) return;
-      const bed = beds.find(item => item.code === editingCode);
+      if (editingCode === null) return;
+      const bed = beds.find(item => item.code === editingCode && (item.room || "") === editingRoom);
       if (!bed) {
         showToast("Không tìm thấy giường cần xóa.");
         closeModal();
         return;
       }
-      if (!window.confirm(`Bạn có chắc muốn xóa giường "${bed.code}"? Thao tác này không thể hoàn tác.`)) return;
+      if (!window.confirm(`Bạn có chắc muốn xóa giường "${bed.code}"${bed.room ? ` tại ${bed.room}` : ""}? Thao tác này không thể hoàn tác.`)) return;
       const previousBeds = beds.map(bed => ({ ...bed }));
-      beds = beds.filter(item => item.code !== editingCode);
+      beds = beds.filter(item => !(item.code === editingCode && (item.room || "") === editingRoom));
       try {
         if (backendConnected) {
-          await BedCareBackend.deleteBed(editingCode);
+          await BedCareBackend.deleteBed(editingCode, editingRoom);
         } else if (!saveBeds()) {
           beds = previousBeds;
           return;
@@ -1003,10 +1225,11 @@
         return;
       }
       const deletedCode = editingCode;
+      const deletedRoom = editingRoom;
       closeModal();
       render();
       if (currentPage !== "beds") navigate(currentPage);
-      showToast(`Đã xóa giường "${deletedCode}".`);
+      showToast(`Đã xóa giường "${deletedCode}"${deletedRoom ? ` tại ${deletedRoom}` : ""}.`);
     });
     modalBackdrop.addEventListener("click", event => {
       if (event.target === modalBackdrop) closeModal();
@@ -1023,6 +1246,8 @@
       event.preventDefault();
       const code = document.getElementById("bedCode").value.trim().replace(/\s+/g, " ").toLocaleUpperCase("vi");
       const department = document.getElementById("bedDepartment").value;
+      const room = document.getElementById("bedRoom").value.trim();
+      const normalizedRoom = room;
       const status = document.getElementById("bedStatus").value;
       const type = document.getElementById("bedType").value;
       const patients = isOccupiedStatus(status)
@@ -1034,11 +1259,25 @@
         showToast("Vui lòng kiểm tra mã giường và khoa.");
         return;
       }
-      if (!editingCode && beds.some(bed =>
-        bed.code.trim().replace(/\s+/g, " ").toLocaleUpperCase("vi") === code
+      if (beds.some(bed =>
+        bed.code.trim().replace(/\s+/g, " ").toLocaleUpperCase("vi") === code &&
+        (bed.room || "").trim() === normalizedRoom &&
+        !(bed.code === editingCode && (bed.room || "") === editingRoom)
       )) {
-        showDuplicateWarning(code);
+        showDuplicateWarning(code, normalizedRoom);
         document.getElementById("bedCode").focus();
+        return;
+      }
+      if (admittedAtInput && dischargedAtInput && dischargedAtInput < admittedAtInput) {
+        showToast("Thời gian ra viện phải bằng hoặc sau thời gian vào viện.");
+        document.getElementById("dischargedAt").focus();
+        return;
+      }
+      if (isOccupiedStatus(status) && patients.some((patient, index) =>
+        patients.findIndex(value => value.toLocaleLowerCase("vi") === patient.toLocaleLowerCase("vi")) !== index
+      )) {
+        showToast("Không thể nhập trùng tên bệnh nhân trên cùng một giường.");
+        document.getElementById("patientName").focus();
         return;
       }
       if (!isOccupiedStatus(status) && (
@@ -1059,16 +1298,20 @@
         return;
       }
       const previousBeds = beds.map(bed => ({ ...bed }));
-      if (editingCode) {
-        const index = beds.findIndex(bed => bed.code === editingCode);
+      let previousIdentity = null;
+      if (editingCode !== null) {
+        const index = beds.findIndex(bed => bed.code === editingCode && (bed.room || "") === editingRoom);
         if (index === -1) {
           showToast("Không tìm thấy giường cần cập nhật.");
           closeModal();
           return;
         }
         const previousBed = beds[index];
+        previousIdentity = { code: previousBed.code, room: previousBed.room || "" };
         const isNewAdmission = isOccupiedStatus(status) && (
-          !isOccupiedStatus(previousBed.status) || JSON.stringify(bedPatients(previousBed)) !== JSON.stringify(patients)
+          !isOccupiedStatus(previousBed.status) ||
+          JSON.stringify(bedPatients(previousBed)) !== JSON.stringify(patients) ||
+          (previousBed.room || "") !== normalizedRoom
         );
         const isDischarge = isOccupiedStatus(previousBed.status) && !isOccupiedStatus(status);
         const admittedAt = isNewAdmission
@@ -1080,6 +1323,7 @@
         beds[index] = {
           ...previousBed,
           department,
+          room: normalizedRoom,
           type,
           status,
           patients,
@@ -1095,6 +1339,7 @@
         beds.push({
           code,
           department,
+          room: normalizedRoom,
           type,
           status,
           patients,
@@ -1103,10 +1348,12 @@
           dischargedAt: dischargedAtInput
         });
       }
-      const successMessage = editingCode ? "Đã cập nhật thông tin giường." : "Đã thêm giường mới.";
+      const wasEditing = editingCode !== null;
+      const successMessage = wasEditing ? "Đã cập nhật thông tin giường." : "Đã thêm giường mới.";
       try {
         if (backendConnected) {
-          await BedCareBackend.saveBed(beds.find(bed => bed.code === code));
+          const savedBed = beds.find(bed => bed.code === code && (bed.room || "") === normalizedRoom);
+          await BedCareBackend.saveBed(savedBed, previousIdentity);
         } else if (!saveBeds()) {
           beds = previousBeds;
           return;
@@ -1117,18 +1364,22 @@
         beds = previousBeds;
         return;
       }
-      document.getElementById("importLocalPanel").hidden = beds.length !== 0 || localBedsForImport.length === 0;
+      document.getElementById("importLocalPanel").hidden = shouldShowLocalImport();
       render();
       if (currentPage !== "beds") navigate(currentPage);
       closeModal();
       showToast(successMessage);
     });
     document.getElementById("notificationButton").addEventListener("click", () => showToast("Bạn đã xem các thông báo mới nhất."));
-    document.getElementById("helpButton").addEventListener("click", () => showToast("Vui lòng liên hệ bộ phận hỗ trợ của bệnh viện."));
     document.querySelectorAll(".nav-item[data-nav]").forEach(button => {
       button.addEventListener("click", () => navigate(button.dataset.nav));
     });
     document.getElementById("otherPage").addEventListener("click", async event => {
+      const updateAccessButton = event.target.closest("[data-update-member]");
+      if (updateAccessButton) {
+        await updateMemberAccess(updateAccessButton.dataset.updateMember, updateAccessButton);
+        return;
+      }
       const removeButton = event.target.closest("[data-remove-member]");
       if (removeButton) {
         await removeMember(removeButton.dataset.removeMember, removeButton);
@@ -1145,8 +1396,21 @@
       }
       const row = event.target.closest("[data-bed-code]");
       if (row) {
-        const bed = beds.find(item => item.code === row.dataset.bedCode);
+        const bed = beds.find(item =>
+          item.code === row.dataset.bedCode && (item.room || "") === row.dataset.room
+        );
         if (bed) openModal(bed);
+      }
+    });
+    document.getElementById("otherPage").addEventListener("change", event => {
+      const roleSelect = event.target.closest("[data-member-role]");
+      if (roleSelect) {
+        const departmentField = document.querySelector(`[data-member-department-field="${CSS.escape(roleSelect.dataset.memberRole)}"]`);
+        if (departmentField) departmentField.hidden = roleSelect.value === "admin";
+        return;
+      }
+      if (event.target.id === "memberRoleInput") {
+        document.getElementById("newMemberDepartmentField").hidden = event.target.value === "admin";
       }
     });
     document.getElementById("otherPage").addEventListener("input", event => {
@@ -1227,9 +1491,15 @@
       try {
         if (unsubscribeBeds) unsubscribeBeds();
         unsubscribeBeds = null;
+        if (unsubscribeMembership) unsubscribeMembership();
+        unsubscribeMembership = null;
         await BedCareBackend.signOut();
         backendConnected = false;
         currentUserRole = "member";
+        currentUserDepartment = null;
+        currentUserId = null;
+        localBedsForImport = [];
+        populateDepartments();
         document.getElementById("profileRole").textContent = "Thành viên";
         beds = [];
         render();
