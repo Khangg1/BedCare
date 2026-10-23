@@ -187,6 +187,14 @@
     .modal-actions .primary-button { min-height: 38px; font-size: 11px; }
     .toast { position: fixed; z-index: 20; right: 24px; bottom: 22px; padding: 11px 15px; color: white; background: #203654; border-radius: 9px; box-shadow: 0 8px 25px #182b4933; font-size: 12px; opacity: 0; transform: translateY(10px); pointer-events: none; transition: .2s ease; }
     .toast.show { opacity: 1; transform: translateY(0); }
+    .auth-backdrop { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 20px; background: #f5f8fc; }
+    .auth-card { width: min(400px, 100%); padding: 25px; border: 1px solid var(--line); border-radius: 15px; background: white; box-shadow: 0 20px 70px #0b1d3a40; }
+    .auth-card h2 { margin: 0 0 5px; font-size: 19px; }
+    .auth-card p { margin: 0 0 17px; color: var(--muted); font-size: 12px; }
+    .auth-error { margin: 0 0 13px !important; color: #a34b43 !important; }
+    .auth-card .primary-button { width: 100%; }
+    .logout-button { min-height: 34px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; color: #68778d; background: white; font-size: 11px; }
+    .sync-status.offline::before { background: var(--orange); }
     [hidden] { display: none !important; }
     .page-panel { padding: 20px; }
     .page-panel + .page-panel { margin-top: 16px; }
@@ -331,6 +339,7 @@
         <div class="breadcrumbs"><span id="breadcrumbRoot">Quản lý</span> <span style="padding:0 7px;color:#bac3cf">/</span> <strong id="breadcrumbPage">Giường bệnh</strong></div>
         <div class="top-actions">
           <span class="date-label" id="todayDate"></span>
+          <button class="logout-button" id="logoutButton" type="button" hidden>Đăng xuất</button>
           <button class="icon-button" id="notificationButton" type="button" aria-label="Thông báo">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg><span class="notification-dot"></span>
           </button>
@@ -338,6 +347,11 @@
       </header>
 
       <div class="content">
+        <section class="panel page-panel" id="importLocalPanel" hidden>
+          <h2 class="page-panel-title">Chuyển dữ liệu từ thiết bị này</h2>
+          <p class="page-panel-subtitle">Có dữ liệu giường lưu cục bộ. Chỉ nhập khi database dùng chung chưa có giường để tránh ghi đè.</p>
+          <button class="primary-button" id="importLocalButton" type="button">Nhập dữ liệu hiện có</button>
+        </section>
         <div id="bedsPage">
         <section class="page-heading">
           <div>
@@ -394,7 +408,7 @@
             <span class="result-count" id="resultCount"></span>
           </div>
           <div class="bed-grid" id="bedGrid"></div>
-          <div class="panel-footer"><span id="footerCount">Dữ liệu giường bệnh</span><span class="sync-status">Đã lưu trên thiết bị này</span></div>
+          <div class="panel-footer"><span id="footerCount">Dữ liệu giường bệnh</span><span class="sync-status" id="syncStatus">Đồng bộ với máy chủ</span></div>
         </section>
         </div>
         <section id="otherPage" hidden></section>
@@ -430,14 +444,31 @@
     </section>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="auth-backdrop" id="authBackdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <form class="auth-card" id="loginForm">
+      <h2 id="authTitle">Đăng nhập BedCare</h2>
+      <p>Đăng nhập bằng tài khoản được cấp quyền để xem dữ liệu dùng chung.</p>
+      <div class="form-field"><label for="loginEmail">Email</label><input id="loginEmail" type="email" autocomplete="username" required></div>
+      <div class="form-field"><label for="loginPassword">Mật khẩu</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
+      <p class="auth-error" id="authError" role="alert" hidden></p>
+      <button class="primary-button" id="loginButton" type="submit">Đăng nhập</button>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="bedcare-backend.js"></script>
   <script>
     const departments = ["Liên Chuyên Khoa"];
     const storageKey = "bedcare-beds-v2";
     const hospitalNameKey = "bedcare-hospital-name";
     let beds = loadBeds();
+    let localBedsForImport = beds.map(bed => ({ ...bed, patients: [...(bed.patients || [])] }));
     let editingCode = null;
     let toastTimer;
     let currentPage = "beds";
+    let backendConnected = false;
+    let unsubscribeBeds = null;
 
     function loadBeds() {
       try {
@@ -664,6 +695,7 @@
     }
 
     function saveBeds() {
+      if (backendConnected) return true;
       try {
         localStorage.setItem(storageKey, JSON.stringify(beds));
         return true;
@@ -671,6 +703,82 @@
         console.error("Không thể lưu dữ liệu giường:", error);
         showToast("Không thể lưu dữ liệu. Vui lòng kiểm tra bộ nhớ trình duyệt.");
         return false;
+      }
+    }
+
+    function setSyncStatus(connected) {
+      const status = document.getElementById("syncStatus");
+      status.textContent = connected ? "Đồng bộ realtime" : "Đang mất kết nối";
+      status.classList.toggle("offline", !connected);
+    }
+
+    async function loadRemoteBeds() {
+      beds = await BedCareBackend.getBeds();
+      render();
+      if (currentPage !== "beds") navigate(currentPage);
+      document.getElementById("importLocalPanel").hidden = beds.length !== 0 || localBedsForImport.length === 0;
+    }
+
+    function startRealtimeSync() {
+      if (unsubscribeBeds) unsubscribeBeds();
+      unsubscribeBeds = BedCareBackend.subscribeToBeds(async () => {
+        try {
+          await loadRemoteBeds();
+          setSyncStatus(true);
+        } catch (error) {
+          console.error("Không thể đồng bộ dữ liệu giường:", error);
+          setSyncStatus(false);
+          showToast(`Không thể đồng bộ dữ liệu: ${error.message}`);
+        }
+      }, error => {
+        console.error("Kết nối realtime bị gián đoạn:", error);
+        setSyncStatus(false);
+      });
+    }
+
+    async function signInAndLoad() {
+      await loadRemoteBeds();
+      backendConnected = true;
+      document.getElementById("authBackdrop").hidden = true;
+      document.getElementById("logoutButton").hidden = false;
+      document.getElementById("importLocalPanel").hidden = beds.length !== 0 || localBedsForImport.length === 0;
+      setSyncStatus(true);
+      startRealtimeSync();
+    }
+
+    async function initializeBackend() {
+      try {
+        BedCareBackend.getClient();
+        const { session } = await BedCareBackend.getSession();
+        if (session) await signInAndLoad();
+      } catch (error) {
+        console.error("Không thể kết nối hoặc tải dữ liệu Supabase:", error);
+        document.getElementById("authError").textContent = error.message;
+        document.getElementById("authError").hidden = false;
+      }
+    }
+
+    async function importLocalBeds() {
+      const localBeds = localBedsForImport;
+      if (!localBeds.length) {
+        showToast("Thiết bị này chưa có dữ liệu giường để nhập.");
+        return;
+      }
+      if (!window.confirm(`Nhập ${localBeds.length} giường trên thiết bị này vào database dùng chung? Chỉ tiếp tục nếu database đang trống.`)) return;
+      const button = document.getElementById("importLocalButton");
+      button.disabled = true;
+      try {
+        await BedCareBackend.importBeds(localBeds);
+        await loadRemoteBeds();
+        localBedsForImport = [];
+        localStorage.removeItem(storageKey);
+        document.getElementById("importLocalPanel").hidden = true;
+        showToast(`Đã nhập ${localBeds.length} giường vào dữ liệu dùng chung.`);
+      } catch (error) {
+        console.error("Không thể nhập dữ liệu trên thiết bị:", error);
+        showToast(`Không thể nhập dữ liệu: ${error.message}`);
+      } finally {
+        button.disabled = false;
       }
     }
 
@@ -786,7 +894,7 @@
     });
     document.getElementById("closeModalButton").addEventListener("click", closeModal);
     document.getElementById("cancelModalButton").addEventListener("click", closeModal);
-    document.getElementById("deleteBedButton").addEventListener("click", () => {
+    document.getElementById("deleteBedButton").addEventListener("click", async () => {
       if (!editingCode) return;
       const bed = beds.find(item => item.code === editingCode);
       if (!bed) {
@@ -797,7 +905,16 @@
       if (!window.confirm(`Bạn có chắc muốn xóa giường "${bed.code}"? Thao tác này không thể hoàn tác.`)) return;
       const previousBeds = beds.map(bed => ({ ...bed }));
       beds = beds.filter(item => item.code !== editingCode);
-      if (!saveBeds()) {
+      try {
+        if (backendConnected) {
+          await BedCareBackend.deleteBed(editingCode);
+        } else if (!saveBeds()) {
+          beds = previousBeds;
+          return;
+        }
+      } catch (error) {
+        console.error("Không thể xóa giường:", error);
+        showToast(`Không thể xóa giường trên máy chủ: ${error.message}`);
         beds = previousBeds;
         return;
       }
@@ -818,7 +935,7 @@
     duplicateWarning.addEventListener("click", event => {
       if (event.target === duplicateWarning) closeDuplicateWarning();
     });
-    bedForm.addEventListener("submit", event => {
+    bedForm.addEventListener("submit", async event => {
       event.preventDefault();
       const code = document.getElementById("bedCode").value.trim().replace(/\s+/g, " ").toLocaleUpperCase("vi");
       const department = document.getElementById("bedDepartment").value;
@@ -903,10 +1020,20 @@
         });
       }
       const successMessage = editingCode ? "Đã cập nhật thông tin giường." : "Đã thêm giường mới.";
-      if (!saveBeds()) {
+      try {
+        if (backendConnected) {
+          await BedCareBackend.saveBed(beds.find(bed => bed.code === code));
+        } else if (!saveBeds()) {
+          beds = previousBeds;
+          return;
+        }
+      } catch (error) {
+        console.error("Không thể lưu giường:", error);
+        showToast(`Không thể lưu giường trên máy chủ: ${error.message}`);
         beds = previousBeds;
         return;
       }
+      document.getElementById("importLocalPanel").hidden = beds.length !== 0 || localBedsForImport.length === 0;
       render();
       if (currentPage !== "beds") navigate(currentPage);
       closeModal();
@@ -958,6 +1085,46 @@
       updateBrandName(name);
       showToast("Đã lưu cài đặt.");
     });
+    document.getElementById("loginForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const errorElement = document.getElementById("authError");
+      const loginButton = document.getElementById("loginButton");
+      errorElement.hidden = true;
+      loginButton.disabled = true;
+      try {
+        await BedCareBackend.signIn(
+          document.getElementById("loginEmail").value.trim(),
+          document.getElementById("loginPassword").value
+        );
+        await signInAndLoad();
+      } catch (error) {
+        console.error("Không thể đăng nhập hoặc tải dữ liệu:", error);
+        errorElement.textContent = error.message;
+        errorElement.hidden = false;
+      } finally {
+        loginButton.disabled = false;
+      }
+    });
+    document.getElementById("importLocalButton").addEventListener("click", importLocalBeds);
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      try {
+        if (unsubscribeBeds) unsubscribeBeds();
+        unsubscribeBeds = null;
+        await BedCareBackend.signOut();
+        backendConnected = false;
+        beds = [];
+        render();
+        document.getElementById("otherPage").replaceChildren();
+        document.getElementById("bedsPage").hidden = false;
+        document.getElementById("logoutButton").hidden = true;
+        document.getElementById("importLocalPanel").hidden = true;
+        document.getElementById("authBackdrop").hidden = false;
+      } catch (error) {
+        console.error("Không thể đăng xuất:", error);
+        showToast(`Không thể đăng xuất: ${error.message}`);
+      }
+    });
+    initializeBackend();
   </script>
 </body>
 </html>

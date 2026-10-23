@@ -61,6 +61,17 @@
     .badge.available { color: #188b65; background: var(--green-soft); } .badge.occupied { color: #3978d8; background: var(--blue-soft); } .badge.cleaning { color: #bd7a1e; background: var(--orange-soft); }
     .empty { padding: 32px 10px; color: var(--muted); text-align: center; font-size: 12px; }
     .error { margin-bottom: 15px; padding: 11px 13px; border-radius: 8px; color: #a34b43; background: var(--red-soft); font-size: 12px; }
+    .auth-backdrop { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 20px; background: #f5f8fc; }
+    .auth-card { width: min(400px, 100%); padding: 25px; border: 1px solid var(--line); border-radius: 15px; background: white; box-shadow: 0 20px 70px #0b1d3a40; }
+    .auth-card h2 { margin: 0 0 5px; font-size: 19px; }
+    .auth-card p { margin: 0 0 17px; color: var(--muted); font-size: 12px; }
+    .auth-card label { display: block; margin-bottom: 6px; color: #52627a; font-size: 11px; font-weight: 650; }
+    .auth-card input { width: 100%; height: 39px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); }
+    .auth-error { margin: 0 0 13px !important; color: #a34b43 !important; }
+    .auth-card button { width: 100%; min-height: 40px; border: 0; border-radius: 9px; color: white; background: var(--blue); font-weight: 650; }
+    .logout-button { min-height: 34px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; color: #68778d; background: white; font-size: 11px; }
+    .sync-status { color: var(--muted); font-size: 11px; }
+    .sync-status.offline { color: #bd7a1e; }
     [hidden] { display: none !important; }
     @media(max-width:1000px) { .sidebar { width: 210px; flex-basis: 210px; } .content { padding: 24px; } .topbar { padding: 0 24px; } .stats { grid-template-columns: repeat(2,minmax(0,1fr)); } }
     @media(max-width:650px) { .sidebar { width: 60px; flex-basis: 60px; padding: 20px 8px; } .brand { padding: 0 0 24px; } .brand-copy,.nav-label,.nav-item span { display: none; } .nav-item { justify-content: center; padding: 0; } .content { padding: 20px 14px; } .topbar { height: 62px; padding: 0 14px; } .stats { gap: 9px; } .card { padding: 13px; } .stat-value { font-size: 23px; } .panel { padding: 15px; } .heading h1 { font-size: 21px; } .heading p { font-size: 11px; } .button { min-height: 36px; padding: 0 10px; font-size: 11px; } .bar-row { grid-template-columns: 95px 1fr 25px; gap: 8px; } }
@@ -80,7 +91,7 @@
       <a class="nav-item" href="quan-ly-giuong.html#settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1a1.7 1.7 0 0 1-2.4 2.4l-.1-.1a1.7 1.7 0 0 0-2.9 1.2v.2a1.7 1.7 0 0 1-3.4 0v-.2a1.7 1.7 0 0 0-2.9-1.2l-.1.1a1.7 1.7 0 0 1-2.4-2.4l.1-.1a1.7 1.7 0 0 0-1.2-2.9H4a1.7 1.7 0 0 1 0-3.4h.2a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a1.7 1.7 0 0 1 2.4-2.4l.1.1a1.7 1.7 0 0 0 2.9-1.2V2a1.7 1.7 0 0 1 3.4 0v.2a1.7 1.7 0 0 0 2.9 1.2l.1-.1a1.7 1.7 0 0 1 2.4 2.4l-.1.1a1.7 1.7 0 0 0 1.2 2.9h.2a1.7 1.7 0 0 1 0 3.4h-.2a1.7 1.7 0 0 0-1.2 2.9Z"/></svg><span>Cài đặt</span></a>
     </aside>
     <main class="main">
-      <header class="topbar"><div class="breadcrumbs">Quản lý <span style="padding:0 7px;color:#bac3cf">/</span> <strong>Tổng quan</strong></div><span class="date" id="todayDate"></span></header>
+      <header class="topbar"><div class="breadcrumbs">Quản lý <span style="padding:0 7px;color:#bac3cf">/</span> <strong>Tổng quan</strong></div><span class="date" id="todayDate"></span><span class="sync-status" id="syncStatus">Đang đồng bộ</span><button class="logout-button" id="logoutButton" type="button" hidden>Đăng xuất</button></header>
       <div class="content">
         <section class="heading"><div><h1>Tổng quan</h1><p>Tình hình giường bệnh tại <span id="hospitalName">Liên Chuyên Khoa</span>.</p></div><a class="button" href="quan-ly-giuong.html">Quản lý giường</a></section>
         <div id="dataError" class="error" hidden></div>
@@ -99,6 +110,19 @@
       </div>
     </main>
   </div>
+  <div class="auth-backdrop" id="authBackdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <form class="auth-card" id="loginForm">
+      <h2 id="authTitle">Đăng nhập BedCare</h2>
+      <p>Đăng nhập bằng tài khoản được cấp quyền để xem dữ liệu dùng chung.</p>
+      <div style="margin-bottom:14px"><label for="loginEmail">Email</label><input id="loginEmail" type="email" autocomplete="username" required></div>
+      <div style="margin-bottom:14px"><label for="loginPassword">Mật khẩu</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
+      <p class="auth-error" id="authError" role="alert" hidden></p>
+      <button id="loginButton" type="submit">Đăng nhập</button>
+    </form>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="bedcare-backend.js"></script>
   <script>
     const statusLabels = { available: "Còn trống", occupied: "Đang sử dụng", cleaning: "Đang vệ sinh" };
     const typeLabels = { single: "Giường đơn", double: "Giường đôi" };
@@ -191,6 +215,93 @@
     }
 
     renderOverview(loadBeds());
+    let unsubscribeBeds = null;
+
+    function setSyncStatus(connected) {
+      const status = document.getElementById("syncStatus");
+      status.textContent = connected ? "Đồng bộ realtime" : "Đang mất kết nối";
+      status.classList.toggle("offline", !connected);
+    }
+
+    async function loadRemoteOverview() {
+      renderOverview(await BedCareBackend.getBeds());
+    }
+
+    function startRealtimeSync() {
+      if (unsubscribeBeds) unsubscribeBeds();
+      unsubscribeBeds = BedCareBackend.subscribeToBeds(async () => {
+        try {
+          await loadRemoteOverview();
+          setSyncStatus(true);
+        } catch (error) {
+          console.error("Không thể đồng bộ tổng quan:", error);
+          setSyncStatus(false);
+          showAuthError(error);
+        }
+      }, error => {
+        console.error("Kết nối realtime bị gián đoạn:", error);
+        setSyncStatus(false);
+      });
+    }
+
+    async function signInAndLoad() {
+      await loadRemoteOverview();
+      document.getElementById("authBackdrop").hidden = true;
+      document.getElementById("logoutButton").hidden = false;
+      setSyncStatus(true);
+      startRealtimeSync();
+    }
+
+    function showAuthError(error) {
+      console.error("Không thể kết nối hoặc đọc dữ liệu Supabase:", error);
+      const errorElement = document.getElementById("authError");
+      errorElement.textContent = error.message;
+      errorElement.hidden = false;
+    }
+
+    async function initializeBackend() {
+      try {
+        BedCareBackend.getClient();
+        const { session } = await BedCareBackend.getSession();
+        if (session) await signInAndLoad();
+      } catch (error) {
+        showAuthError(error);
+      }
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const errorElement = document.getElementById("authError");
+      const loginButton = document.getElementById("loginButton");
+      errorElement.hidden = true;
+      loginButton.disabled = true;
+      try {
+        await BedCareBackend.signIn(
+          document.getElementById("loginEmail").value.trim(),
+          document.getElementById("loginPassword").value
+        );
+        await signInAndLoad();
+      } catch (error) {
+        showAuthError(error);
+      } finally {
+        loginButton.disabled = false;
+      }
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      try {
+        if (unsubscribeBeds) unsubscribeBeds();
+        unsubscribeBeds = null;
+        await BedCareBackend.signOut();
+        renderOverview([]);
+        document.getElementById("logoutButton").hidden = true;
+        document.getElementById("authBackdrop").hidden = false;
+      } catch (error) {
+        showAuthError(error);
+      }
+    });
+
+    initializeBackend();
   </script>
 </body>
 </html>
