@@ -8,7 +8,16 @@
       throw new Error("Không tải được thư viện Supabase. Kiểm tra kết nối Internet rồi tải lại trang.");
     }
     if (!window.__bedcareSupabaseClient) {
-      window.__bedcareSupabaseClient = window.supabase.createClient(config.url, config.anonKey);
+      const projectRef = new URL(config.url).hostname.split(".")[0];
+      window.__bedcareSupabaseClient = window.supabase.createClient(config.url, config.anonKey, {
+        auth: {
+          storageKey: `sb-${projectRef}-auth-token`,
+          storage: window.localStorage,
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: false
+        }
+      });
     }
     return window.__bedcareSupabaseClient;
   }
@@ -16,6 +25,15 @@
   function unwrap(result) {
     if (result.error) throw result.error;
     return result.data;
+  }
+
+  function authIdentifier(value) {
+    const identifier = value.trim();
+    if (identifier.includes("@")) return identifier;
+    if (!/^[a-z0-9][a-z0-9._-]{2,31}$/i.test(identifier)) {
+      throw new Error("Tên đăng nhập cần dài 3–32 ký tự, bắt đầu bằng chữ hoặc số; chỉ dùng chữ, số, dấu chấm, gạch dưới hoặc gạch ngang.");
+    }
+    return `${identifier.toLowerCase()}@bedcare.invalid`;
   }
 
   function toBed(row) {
@@ -44,14 +62,31 @@
     };
   }
 
-  async function ensureMembership(client) {
-    const membership = unwrap(await client
+  async function getMembership() {
+    const client = getClient();
+    const { user } = unwrap(await client.auth.getUser());
+    if (!user) return null;
+    return unwrap(await client
       .from("hospital_members")
-      .select("user_id")
+      .select("user_id, role")
+      .eq("user_id", user.id)
       .maybeSingle());
+  }
+
+  async function ensureMembership() {
+    const membership = await getMembership();
     if (!membership) {
       throw new Error("Tài khoản chưa được cấp quyền sử dụng. Hãy nhờ quản trị viên thêm UUID vào hospital_members.");
     }
+    return membership;
+  }
+
+  async function ensureAdmin() {
+    const membership = await ensureMembership();
+    if (membership.role !== "admin") {
+      throw new Error("Chỉ quản trị viên mới được quản lý thành viên.");
+    }
+    return membership;
   }
 
   window.BedCareBackend = {
@@ -59,15 +94,53 @@
     async getSession() {
       return unwrap(await getClient().auth.getSession());
     },
-    async signIn(email, password) {
-      return unwrap(await getClient().auth.signInWithPassword({ email, password }));
+    async signIn(usernameOrEmail, password) {
+      return unwrap(await getClient().auth.signInWithPassword({
+        email: authIdentifier(usernameOrEmail),
+        password
+      }));
+    },
+    async signUp(username, password) {
+      const normalizedUsername = username.trim().toLowerCase();
+      const email = authIdentifier(normalizedUsername);
+      return unwrap(await getClient().auth.signUp({
+        email,
+        password,
+        options: { data: { username: normalizedUsername } }
+      }));
     },
     async signOut() {
       unwrap(await getClient().auth.signOut());
     },
+    getMembership,
+    async getMembers() {
+      await ensureAdmin();
+      return unwrap(await getClient()
+        .from("hospital_members")
+        .select("user_id, role, created_at")
+        .order("created_at")).map(member => ({
+          userId: member.user_id,
+          role: member.role,
+          createdAt: member.created_at
+        }));
+    },
+    async addMember(userId) {
+      await ensureAdmin();
+      unwrap(await getClient()
+        .from("hospital_members")
+        .insert({ user_id: userId, role: "member" }));
+    },
+    async removeMember(userId) {
+      await ensureAdmin();
+      unwrap(await getClient()
+        .from("hospital_members")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", "member"));
+    },
     async getBeds() {
       const client = getClient();
-      await ensureMembership(client);
+      await ensureMembership();
       return unwrap(await client
         .from("beds")
         .select("code, department, bed_type, status, patients, since, admitted_at, discharged_at")

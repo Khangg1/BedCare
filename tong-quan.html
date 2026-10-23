@@ -110,14 +110,15 @@
       </div>
     </main>
   </div>
-  <div class="auth-backdrop" id="authBackdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="auth-backdrop" id="authBackdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle" hidden>
     <form class="auth-card" id="loginForm">
       <h2 id="authTitle">Đăng nhập BedCare</h2>
-      <p>Đăng nhập bằng tài khoản được cấp quyền để xem dữ liệu dùng chung.</p>
-      <div style="margin-bottom:14px"><label for="loginEmail">Email</label><input id="loginEmail" type="email" autocomplete="username" required></div>
+      <p id="authDescription">Dùng tên đăng nhập hoặc email đã đăng ký.</p>
+      <div style="margin-bottom:14px"><label for="loginUsername">Tên đăng nhập hoặc email</label><input id="loginUsername" type="text" autocomplete="username" required></div>
       <div style="margin-bottom:14px"><label for="loginPassword">Mật khẩu</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
       <p class="auth-error" id="authError" role="alert" hidden></p>
       <button id="loginButton" type="submit">Đăng nhập</button>
+      <button id="authModeToggle" type="button" style="margin-top:10px;color:#3978e8;background:transparent">Chưa có tài khoản? Tạo tài khoản</button>
     </form>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -129,6 +130,7 @@
     const bedPatients = bed => Array.isArray(bed.patients) ? bed.patients.filter(Boolean) : [bed.patient || ""].filter(Boolean);
     const bedCapacity = bed => bed.type === "double" || (!bed.type && bed.status === "double") ? 2 : 1;
     const bedStorageKey = "bedcare-beds-v2";
+    let authMode = "login";
     function escapeHtml(value) {
       return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
     }
@@ -245,6 +247,10 @@
     }
 
     async function signInAndLoad() {
+      const membership = await BedCareBackend.getMembership();
+      if (!membership) {
+        throw new Error("Tài khoản chưa được quản trị viên cấp quyền BedCare. Hãy gửi UUID tài khoản cho admin để được duyệt.");
+      }
       await loadRemoteOverview();
       document.getElementById("authBackdrop").hidden = true;
       document.getElementById("logoutButton").hidden = false;
@@ -263,8 +269,13 @@
       try {
         BedCareBackend.getClient();
         const { session } = await BedCareBackend.getSession();
-        if (session) await signInAndLoad();
+        if (session) {
+          await signInAndLoad();
+        } else {
+          document.getElementById("authBackdrop").hidden = false;
+        }
       } catch (error) {
+        document.getElementById("authBackdrop").hidden = false;
         showAuthError(error);
       }
     }
@@ -276,16 +287,41 @@
       errorElement.hidden = true;
       loginButton.disabled = true;
       try {
-        await BedCareBackend.signIn(
-          document.getElementById("loginEmail").value.trim(),
-          document.getElementById("loginPassword").value
-        );
+        const username = document.getElementById("loginUsername").value.trim();
+        const password = document.getElementById("loginPassword").value;
+        if (authMode === "signup") {
+          const { user, session } = await BedCareBackend.signUp(username, password);
+          if (!user) throw new Error("Không tạo được tài khoản. Vui lòng thử lại.");
+          if (!session) {
+            throw new Error(`Tài khoản đã tạo với UUID ${user.id}, nhưng project đang yêu cầu xác nhận email. Hãy nhờ quản trị viên tắt xác nhận email trong Supabase Auth để dùng username không cần email.`);
+          }
+          const membership = await BedCareBackend.getMembership();
+          if (!membership) {
+            throw new Error(`Đã tạo tài khoản. Gửi UUID này cho admin để được cấp quyền BedCare: ${user.id}`);
+          }
+        } else {
+          await BedCareBackend.signIn(username, password);
+        }
         await signInAndLoad();
       } catch (error) {
         showAuthError(error);
       } finally {
         loginButton.disabled = false;
       }
+    });
+
+    document.getElementById("authModeToggle").addEventListener("click", () => {
+      authMode = authMode === "login" ? "signup" : "login";
+      document.getElementById("authTitle").textContent = authMode === "signup" ? "Tạo tài khoản BedCare" : "Đăng nhập BedCare";
+      document.getElementById("authDescription").textContent = authMode === "signup"
+        ? "Tạo tên đăng nhập và mật khẩu. Admin cần cấp quyền trước khi bạn dùng dữ liệu giường."
+        : "Dùng tên đăng nhập hoặc email đã đăng ký.";
+      document.getElementById("loginButton").textContent = authMode === "signup" ? "Tạo tài khoản" : "Đăng nhập";
+      document.getElementById("authModeToggle").textContent = authMode === "signup"
+        ? "Đã có tài khoản? Đăng nhập"
+        : "Chưa có tài khoản? Tạo tài khoản";
+      document.getElementById("loginPassword").autocomplete = authMode === "signup" ? "new-password" : "current-password";
+      document.getElementById("authError").hidden = true;
     });
 
     document.getElementById("logoutButton").addEventListener("click", async () => {

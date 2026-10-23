@@ -227,6 +227,11 @@
     .settings-form { max-width: 510px; }
     .settings-note { padding: 12px 14px; border-radius: 9px; color: #64758d; background: #f5f8fc; font-size: 11px; }
     .settings-form .primary-button { margin-top: 5px; }
+    .member-list { display: grid; gap: 10px; margin-top: 16px; }
+    .member-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 9px; }
+    .member-id { color: var(--ink); font-size: 11px; overflow-wrap: anywhere; }
+    .member-role { margin-top: 4px; color: var(--muted); font-size: 10px; }
+    .member-remove { flex: 0 0 auto; border: 0; color: #d14b4b; background: transparent; font-size: 11px; font-weight: 650; cursor: pointer; }
     @media (max-width: 1100px) {
       .sidebar { width: 215px; flex-basis: 215px; }
       .content { padding-left: 24px; padding-right: 24px; }
@@ -329,7 +334,7 @@
         <div class="profile">
           <div class="avatar">TT</div>
           <div><div class="profile-name">TÍN TRUNG
-          </div><div class="profile-role">Quản trị viên</div></div>
+          </div><div class="profile-role" id="profileRole">Thành viên</div></div>
         </div>
       </div>
     </aside>
@@ -444,14 +449,15 @@
     </section>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <div class="auth-backdrop" id="authBackdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="auth-backdrop" id="authBackdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle" hidden>
     <form class="auth-card" id="loginForm">
       <h2 id="authTitle">Đăng nhập BedCare</h2>
-      <p>Đăng nhập bằng tài khoản được cấp quyền để xem dữ liệu dùng chung.</p>
-      <div class="form-field"><label for="loginEmail">Email</label><input id="loginEmail" type="email" autocomplete="username" required></div>
+      <p id="authDescription">Dùng tên đăng nhập hoặc email đã đăng ký.</p>
+      <div class="form-field"><label for="loginUsername">Tên đăng nhập hoặc email</label><input id="loginUsername" type="text" autocomplete="username" required></div>
       <div class="form-field"><label for="loginPassword">Mật khẩu</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
       <p class="auth-error" id="authError" role="alert" hidden></p>
       <button class="primary-button" id="loginButton" type="submit">Đăng nhập</button>
+      <button class="text-button" id="authModeToggle" type="button" style="display:block;margin:12px auto 0">Chưa có tài khoản? Tạo tài khoản</button>
     </form>
   </div>
 
@@ -469,6 +475,8 @@
     let currentPage = "beds";
     let backendConnected = false;
     let unsubscribeBeds = null;
+    let currentUserRole = "member";
+    let authMode = "login";
 
     function loadBeds() {
       try {
@@ -653,8 +661,70 @@
         <section class="page-heading"><div><h1>Cài đặt</h1><p>Quản lý thông tin hiển thị của trang.</p></div></section>
         <section class="panel page-panel"><h2 class="page-panel-title">Thông tin cơ sở</h2><p class="page-panel-subtitle">Tên cơ sở được dùng trên màn hình tổng quan.</p>
           <form class="settings-form" id="settingsForm"><div class="form-field"><label for="hospitalNameInput">Tên bệnh viện / khoa</label><input id="hospitalNameInput" name="hospitalName" required maxlength="60" value="${escapeHtml(hospitalName)}"></div>
-          <div class="settings-note">Dữ liệu giường và cài đặt được lưu trong trình duyệt trên thiết bị này.</div><button class="primary-button" type="submit">Lưu cài đặt</button></form>
-        </section>`;
+          <div class="settings-note">Dữ liệu giường được đồng bộ qua Supabase. Tên cơ sở hiển thị được lưu riêng trên thiết bị này.</div><button class="primary-button" type="submit">Lưu cài đặt</button></form>
+        </section>
+        ${currentUserRole === "admin" ? `
+        <section class="panel page-panel"><h2 class="page-panel-title">Quản lý thành viên</h2><p class="page-panel-subtitle">Chỉ cấp quyền cho tài khoản đã được tạo trong Supabase Authentication. Thành viên có thể quản lý giường nhưng không thể cấp quyền cho người khác.</p>
+          <form class="settings-form" id="memberForm"><div class="form-field"><label for="memberUuidInput">UUID tài khoản cần cấp quyền</label><input id="memberUuidInput" name="userId" required autocomplete="off" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
+          <button class="primary-button" id="addMemberButton" type="submit">Cấp quyền thành viên</button></form>
+          <div id="memberList" class="member-list" aria-live="polite">Đang tải danh sách thành viên...</div>
+        </section>` : ""}`;
+    }
+
+    async function loadMembers() {
+      const container = document.getElementById("memberList");
+      if (!container) return;
+      container.textContent = "Đang tải danh sách thành viên...";
+      try {
+        const members = await BedCareBackend.getMembers();
+        if (!container.isConnected) return;
+        container.innerHTML = members.map(member => `
+          <div class="member-row">
+            <div><div class="member-id">${escapeHtml(member.userId)}</div><div class="member-role">${member.role === "admin" ? "Quản trị viên" : "Thành viên"}</div></div>
+            ${member.role === "member" ? `<button class="member-remove" type="button" data-remove-member="${escapeHtml(member.userId)}">Thu hồi quyền</button>` : ""}
+          </div>`).join("") || `<div class="settings-note">Chưa có thành viên nào.</div>`;
+      } catch (error) {
+        console.error("Không thể tải danh sách thành viên:", error);
+        if (container.isConnected) container.textContent = `Không thể tải danh sách: ${error.message}`;
+      }
+    }
+
+    async function addMember(event) {
+      event.preventDefault();
+      const input = document.getElementById("memberUuidInput");
+      const userId = input.value.trim();
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+        showToast("UUID không đúng định dạng.");
+        return;
+      }
+      const button = document.getElementById("addMemberButton");
+      button.disabled = true;
+      try {
+        await BedCareBackend.addMember(userId);
+        event.target.reset();
+        await loadMembers();
+        showToast("Đã cấp quyền thành viên.");
+      } catch (error) {
+        console.error("Không thể cấp quyền thành viên:", error);
+        showToast(`Không thể cấp quyền: ${error.message}`);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function removeMember(userId, button) {
+      if (!window.confirm(`Thu hồi quyền truy cập của tài khoản ${userId}?`)) return;
+      button.disabled = true;
+      try {
+        await BedCareBackend.removeMember(userId);
+        await loadMembers();
+        showToast("Đã thu hồi quyền thành viên.");
+      } catch (error) {
+        console.error("Không thể thu hồi quyền thành viên:", error);
+        showToast(`Không thể thu hồi quyền: ${error.message}`);
+      } finally {
+        button.disabled = false;
+      }
     }
 
     function updateBrandName(name) {
@@ -674,7 +744,10 @@
       document.getElementById("breadcrumbPage").textContent = labels[page];
       if (page === "patients") otherPage.innerHTML = renderPatients();
       if (page === "reports") otherPage.innerHTML = renderReports();
-      if (page === "settings") otherPage.innerHTML = renderSettings();
+      if (page === "settings") {
+        otherPage.innerHTML = renderSettings();
+        if (currentUserRole === "admin") loadMembers();
+      }
     }
 
     function exportReport() {
@@ -737,6 +810,12 @@
     }
 
     async function signInAndLoad() {
+      const membership = await BedCareBackend.getMembership();
+      if (!membership) {
+        throw new Error("Tài khoản chưa được cấp quyền sử dụng. Hãy nhờ quản trị viên thêm UUID vào hospital_members.");
+      }
+      currentUserRole = membership.role;
+      document.getElementById("profileRole").textContent = currentUserRole === "admin" ? "Quản trị viên" : "Thành viên";
       await loadRemoteBeds();
       backendConnected = true;
       document.getElementById("authBackdrop").hidden = true;
@@ -750,11 +829,16 @@
       try {
         BedCareBackend.getClient();
         const { session } = await BedCareBackend.getSession();
-        if (session) await signInAndLoad();
+        if (session) {
+          await signInAndLoad();
+        } else {
+          document.getElementById("authBackdrop").hidden = false;
+        }
       } catch (error) {
         console.error("Không thể kết nối hoặc tải dữ liệu Supabase:", error);
         document.getElementById("authError").textContent = error.message;
         document.getElementById("authError").hidden = false;
+        document.getElementById("authBackdrop").hidden = false;
       }
     }
 
@@ -1044,7 +1128,12 @@
     document.querySelectorAll(".nav-item[data-nav]").forEach(button => {
       button.addEventListener("click", () => navigate(button.dataset.nav));
     });
-    document.getElementById("otherPage").addEventListener("click", event => {
+    document.getElementById("otherPage").addEventListener("click", async event => {
+      const removeButton = event.target.closest("[data-remove-member]");
+      if (removeButton) {
+        await removeMember(removeButton.dataset.removeMember, removeButton);
+        return;
+      }
       const action = event.target.closest("[data-action]")?.dataset.action;
       if (action === "open-beds") {
         navigate("beds");
@@ -1067,7 +1156,11 @@
         row.hidden = !row.dataset.search.includes(query);
       });
     });
-    document.getElementById("otherPage").addEventListener("submit", event => {
+    document.getElementById("otherPage").addEventListener("submit", async event => {
+      if (event.target.id === "memberForm") {
+        await addMember(event);
+        return;
+      }
       if (event.target.id !== "settingsForm") return;
       event.preventDefault();
       const name = document.getElementById("hospitalNameInput").value.trim();
@@ -1092,10 +1185,21 @@
       errorElement.hidden = true;
       loginButton.disabled = true;
       try {
-        await BedCareBackend.signIn(
-          document.getElementById("loginEmail").value.trim(),
-          document.getElementById("loginPassword").value
-        );
+        const username = document.getElementById("loginUsername").value.trim();
+        const password = document.getElementById("loginPassword").value;
+        if (authMode === "signup") {
+          const { user, session } = await BedCareBackend.signUp(username, password);
+          if (!user) throw new Error("Không tạo được tài khoản. Vui lòng thử lại.");
+          if (!session) {
+            throw new Error(`Tài khoản đã tạo với UUID ${user.id}, nhưng project đang yêu cầu xác nhận email. Hãy nhờ quản trị viên tắt xác nhận email trong Supabase Auth để dùng username không cần email.`);
+          }
+          const membership = await BedCareBackend.getMembership();
+          if (!membership) {
+            throw new Error(`Đã tạo tài khoản. Gửi UUID này cho admin để được cấp quyền BedCare: ${user.id}`);
+          }
+        } else {
+          await BedCareBackend.signIn(username, password);
+        }
         await signInAndLoad();
       } catch (error) {
         console.error("Không thể đăng nhập hoặc tải dữ liệu:", error);
@@ -1105,6 +1209,19 @@
         loginButton.disabled = false;
       }
     });
+    document.getElementById("authModeToggle").addEventListener("click", () => {
+      authMode = authMode === "login" ? "signup" : "login";
+      document.getElementById("authTitle").textContent = authMode === "signup" ? "Tạo tài khoản BedCare" : "Đăng nhập BedCare";
+      document.getElementById("authDescription").textContent = authMode === "signup"
+        ? "Tạo tên đăng nhập và mật khẩu. Admin cần cấp quyền trước khi bạn dùng dữ liệu giường."
+        : "Dùng tên đăng nhập hoặc email đã đăng ký.";
+      document.getElementById("loginButton").textContent = authMode === "signup" ? "Tạo tài khoản" : "Đăng nhập";
+      document.getElementById("authModeToggle").textContent = authMode === "signup"
+        ? "Đã có tài khoản? Đăng nhập"
+        : "Chưa có tài khoản? Tạo tài khoản";
+      document.getElementById("loginPassword").autocomplete = authMode === "signup" ? "new-password" : "current-password";
+      document.getElementById("authError").hidden = true;
+    });
     document.getElementById("importLocalButton").addEventListener("click", importLocalBeds);
     document.getElementById("logoutButton").addEventListener("click", async () => {
       try {
@@ -1112,6 +1229,8 @@
         unsubscribeBeds = null;
         await BedCareBackend.signOut();
         backendConnected = false;
+        currentUserRole = "member";
+        document.getElementById("profileRole").textContent = "Thành viên";
         beds = [];
         render();
         document.getElementById("otherPage").replaceChildren();

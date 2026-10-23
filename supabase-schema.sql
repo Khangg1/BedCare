@@ -1,7 +1,12 @@
 create table if not exists public.hospital_members (
   user_id uuid primary key references auth.users (id) on delete cascade,
+  role text not null default 'member' check (role in ('admin', 'member')),
   created_at timestamptz not null default now()
 );
+
+alter table public.hospital_members
+  add column if not exists role text not null default 'member'
+  check (role in ('admin', 'member'));
 
 create table if not exists public.beds (
   code text primary key,
@@ -24,10 +29,37 @@ create table if not exists public.beds (
 alter table public.hospital_members enable row level security;
 alter table public.beds enable row level security;
 
+create or replace function public.is_hospital_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.hospital_members
+    where user_id = (select auth.uid())
+      and role = 'admin'
+  );
+$$;
+
+revoke all on function public.is_hospital_admin() from public;
+grant execute on function public.is_hospital_admin() to authenticated;
+
 drop policy if exists "Members can view their own membership" on public.hospital_members;
 create policy "Members can view their own membership"
   on public.hospital_members for select to authenticated
-  using (user_id = (select auth.uid()));
+  using (user_id = (select auth.uid()) or public.is_hospital_admin());
+
+drop policy if exists "Admins can add members" on public.hospital_members;
+create policy "Admins can add members"
+  on public.hospital_members for insert to authenticated
+  with check (public.is_hospital_admin() and role = 'member');
+
+drop policy if exists "Admins can remove members" on public.hospital_members;
+create policy "Admins can remove members"
+  on public.hospital_members for delete to authenticated
+  using (public.is_hospital_admin() and role = 'member' and user_id <> (select auth.uid()));
 
 drop policy if exists "Hospital members can read beds" on public.beds;
 create policy "Hospital members can read beds"
@@ -66,12 +98,24 @@ create policy "Hospital members can delete beds"
   ));
 
 grant usage on schema public to authenticated;
-grant select on public.hospital_members to authenticated;
+grant select, insert, delete on public.hospital_members to authenticated;
 grant select, insert, update, delete on public.beds to authenticated;
 
 insert into public.hospital_members (user_id)
-values ('ae39ce7b-d6eb-4902-807c-91fb7a7aebc6')
+values
+  ('ae39ce7b-d6eb-4902-807c-91fb7a7aebc6'),
+  ('64f197b9-b119-463d-a0de-5ed6c3a561aa')
 on conflict (user_id) do nothing;
+
+update public.hospital_members
+set role = case
+  when user_id = 'ae39ce7b-d6eb-4902-807c-91fb7a7aebc6' then 'admin'
+  when user_id = '64f197b9-b119-463d-a0de-5ed6c3a561aa' then 'member'
+end
+where user_id in (
+  'ae39ce7b-d6eb-4902-807c-91fb7a7aebc6',
+  '64f197b9-b119-463d-a0de-5ed6c3a561aa'
+);
 
 do $$
 begin
