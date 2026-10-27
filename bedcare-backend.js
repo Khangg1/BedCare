@@ -178,6 +178,92 @@
         dischargedAt: admission.discharged_at
       }));
     },
+    async importPatientAdmissions(admissions) {
+      await ensureAdmin();
+      if (!Array.isArray(admissions) || admissions.length === 0) {
+        throw new Error("Không có dòng dữ liệu hợp lệ để nhập.");
+      }
+      const allowedDepartments = ["LCK", "Nội", "Ngoại", "Đông Y", "Cấp Cứu"];
+      const rows = admissions.map((admission, index) => {
+        const patientName = typeof admission.patientName === "string" ? admission.patientName.trim() : "";
+        const bedCode = typeof admission.bedCode === "string" ? admission.bedCode.trim() : "";
+        const room = typeof admission.room === "string" ? admission.room.trim() : "";
+        const admittedAt = new Date(admission.admittedAt);
+        const dischargedAt = admission.dischargedAt ? new Date(admission.dischargedAt) : null;
+        if (!patientName || !bedCode || !allowedDepartments.includes(admission.department) ||
+            Number.isNaN(admittedAt.getTime()) ||
+            (dischargedAt && (Number.isNaN(dischargedAt.getTime()) || dischargedAt < admittedAt))) {
+          throw new Error(`Dòng ${index + 1} có tên bệnh nhân, giường, khoa hoặc ngày vào/ra không hợp lệ.`);
+        }
+        return {
+          department: admission.department,
+          room,
+          bed_code: bedCode,
+          patient_name: patientName,
+          admitted_at: admittedAt.toISOString(),
+          discharged_at: dischargedAt ? dischargedAt.toISOString() : null
+        };
+      });
+      const client = getClient();
+      for (let offset = 0; offset < rows.length; offset += 500) {
+        const batch = rows.slice(offset, offset + 500);
+        try {
+          unwrap(await client.from("patient_admissions").insert(batch));
+        } catch (error) {
+          if (offset > 0) {
+            throw new Error(`Đã nhập ${offset}/${rows.length} dòng trước khi xảy ra lỗi: ${error.message}`);
+          }
+          throw error;
+        }
+      }
+      return rows.length;
+    },
+    async getProviderCodeWatchlist() {
+      await ensureMembership();
+      const row = unwrap(await getClient()
+        .from("provider_code_watchlists")
+        .select("cchn_codes, gphn_codes, updated_at")
+        .eq("id", true)
+        .single());
+      return {
+        CCHN: row.cchn_codes,
+        GPHN: row.gphn_codes,
+        updatedAt: row.updated_at
+      };
+    },
+    async saveProviderCodeWatchlist(codeLists) {
+      const membership = await ensureAdmin();
+      const normalizeCodes = codes => {
+        if (!Array.isArray(codes) || !codes.every(code => typeof code === "string")) {
+          throw new Error("Danh sách mã CCHN/GPHN không hợp lệ.");
+        }
+        return [...new Set(codes.map(code => code.trim()).filter(Boolean))];
+      };
+      unwrap(await getClient()
+        .from("provider_code_watchlists")
+        .upsert({
+          id: true,
+          cchn_codes: normalizeCodes(codeLists.CCHN),
+          gphn_codes: normalizeCodes(codeLists.GPHN),
+          updated_at: new Date().toISOString(),
+          updated_by: membership.user_id
+        }, { onConflict: "id" }));
+    },
+    subscribeToProviderCodeWatchlist(onChange, onError) {
+      const channel = getClient()
+        .channel("bedcare-provider-code-watchlist")
+        .on("postgres_changes", {
+          event: "*",
+          schema: "public",
+          table: "provider_code_watchlists"
+        }, onChange)
+        .subscribe(status => {
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            onError(new Error(`Không thể đồng bộ realtime danh sách mã (${status}).`));
+          }
+        });
+      return () => getClient().removeChannel(channel);
+    },
     async saveBed(bed, previousIdentity = null) {
       const client = getClient();
       if (previousIdentity) {

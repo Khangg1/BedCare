@@ -102,6 +102,18 @@ create table if not exists public.patient_admissions (
   )
 );
 
+create table if not exists public.provider_code_watchlists (
+  id boolean primary key default true check (id),
+  cchn_codes text[] not null default '{}',
+  gphn_codes text[] not null default '{}',
+  updated_at timestamptz not null default now(),
+  updated_by uuid references auth.users (id) on delete set null
+);
+
+insert into public.provider_code_watchlists (id)
+values (true)
+on conflict (id) do nothing;
+
 alter table public.patient_admissions
   add column if not exists room text not null default '';
 
@@ -278,6 +290,7 @@ where b.status = 'occupied'
 alter table public.hospital_members enable row level security;
 alter table public.beds enable row level security;
 alter table public.patient_admissions enable row level security;
+alter table public.provider_code_watchlists enable row level security;
 
 create or replace function public.is_hospital_admin()
 returns boolean
@@ -373,12 +386,37 @@ create policy "Hospital members can delete beds"
 grant usage on schema public to authenticated;
 grant select, insert, update, delete on public.hospital_members to authenticated;
 grant select, insert, update, delete on public.beds to authenticated;
-grant select on public.patient_admissions to authenticated;
+grant select, insert on public.patient_admissions to authenticated;
+grant select, insert, update on public.provider_code_watchlists to authenticated;
+
+drop policy if exists "Hospital members can read provider code watchlist" on public.provider_code_watchlists;
+create policy "Hospital members can read provider code watchlist"
+  on public.provider_code_watchlists for select to authenticated
+  using (exists (
+    select 1 from public.hospital_members
+    where user_id = (select auth.uid())
+  ));
+
+drop policy if exists "Admins can add provider code watchlist" on public.provider_code_watchlists;
+create policy "Admins can add provider code watchlist"
+  on public.provider_code_watchlists for insert to authenticated
+  with check (public.is_hospital_admin());
+
+drop policy if exists "Admins can update provider code watchlist" on public.provider_code_watchlists;
+create policy "Admins can update provider code watchlist"
+  on public.provider_code_watchlists for update to authenticated
+  using (public.is_hospital_admin())
+  with check (public.is_hospital_admin());
 
 drop policy if exists "Hospital members can read patient admissions" on public.patient_admissions;
 create policy "Hospital members can read patient admissions"
   on public.patient_admissions for select to authenticated
   using (public.can_access_department(department));
+
+drop policy if exists "Admins can import patient admissions" on public.patient_admissions;
+create policy "Admins can import patient admissions"
+  on public.patient_admissions for insert to authenticated
+  with check (public.is_hospital_admin());
 
 insert into public.hospital_members (user_id, role, department)
 values
@@ -422,6 +460,14 @@ begin
       and tablename = 'hospital_members'
   ) then
     alter publication supabase_realtime add table public.hospital_members;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'provider_code_watchlists'
+  ) then
+    alter publication supabase_realtime add table public.provider_code_watchlists;
   end if;
 end
 $$;

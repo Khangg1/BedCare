@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f8fc">
+  <title>BedCare — Kiểm tra XML</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #182b49;
+      --muted: #7d8ba1;
+      --line: #e9eef5;
+      --canvas: #f5f8fc;
+      --blue: #3978e8;
+      --blue-soft: #edf4ff;
+      --red: #b94343;
+      --red-soft: #fff0ef;
+      --green: #17734f;
+      --green-soft: #e9f8f1;
+      --orange: #9c671b;
+      --orange-soft: #fff4e5;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; color: var(--ink); background: var(--canvas); font: 14px/1.5 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .app { display: flex; min-height: 100vh; }
+    .sidebar { width: 248px; flex: 0 0 248px; padding: 25px 16px 20px; background: white; border-right: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 10px 31px; }
+    .brand-mark { width: 39px; height: 39px; display: grid; flex: 0 0 39px; place-items: center; border-radius: 13px; color: white; background: linear-gradient(145deg,#4b8bf2,#2865d4); font-size: 23px; font-weight: 700; }
+    .brand-name { font-size: 18px; font-weight: 750; letter-spacing: -.5px; }
+    .brand-name span { color: var(--blue); }
+    .brand-caption { color: var(--muted); font-size: 11px; }
+    .nav-label { margin: 8px 0 9px; padding: 0 11px; color: #a1adbd; font-size: 10px; font-weight: 750; letter-spacing: 1.25px; }
+    .nav-item { min-height: 42px; display: flex; align-items: center; gap: 12px; margin-bottom: 3px; padding: 0 11px; border-radius: 9px; color: #708099; text-decoration: none; }
+    .nav-item:hover { color: var(--blue); background: #f5f8fe; }
+    .nav-item.active { color: var(--blue); background: var(--blue-soft); font-weight: 650; }
+    .nav-item svg { width: 18px; height: 18px; flex: 0 0 auto; }
+    .main { min-width: 0; flex: 1; }
+    .topbar { height: 73px; display: flex; align-items: center; padding: 0 34px; border-bottom: 1px solid var(--line); background: white; }
+    .breadcrumbs { color: var(--muted); font-size: 12px; }
+    .breadcrumbs strong { color: var(--ink); }
+    .top-actions { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+    .account-status { color: var(--muted); font-size: 11px; }
+    .logout-button { min-height: 34px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; color: #68778d; background: white; font-size: 11px; }
+    .content { max-width: 1100px; margin: auto; padding: 32px 34px 48px; }
+    .heading { margin-bottom: 22px; }
+    h1 { margin: 0 0 5px; font-size: 24px; letter-spacing: -.65px; }
+    .heading p { margin: 0; color: var(--muted); font-size: 13px; }
+    .panel { padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: white; box-shadow: 0 8px 28px rgba(35,62,98,.055); }
+    .panel + .panel { margin-top: 16px; }
+    .panel h2 { margin: 0 0 5px; font-size: 16px; }
+    .panel-description { margin: 0 0 17px; color: var(--muted); font-size: 12px; }
+    .code-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .code-field label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 650; }
+    .code-field textarea { width: 100%; min-height: 100px; padding: 10px 11px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: white; font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; resize: vertical; }
+    .code-field textarea:focus { outline: 0; border-color: #9dbdf5; box-shadow: 0 0 0 3px #3978e812; }
+    .settings-actions { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+    .settings-status { color: var(--muted); font-size: 11px; }
+    .settings-status.error { color: var(--red); }
+    .secondary-button { min-height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: white; font-size: 11px; font-weight: 600; }
+    .drop-zone { display: grid; min-height: 220px; place-items: center; padding: 24px; border: 2px dashed #cbd8eb; border-radius: 12px; background: #fafcff; text-align: center; transition: .18s ease; }
+    .drop-zone.dragging { border-color: var(--blue); background: var(--blue-soft); }
+    .drop-zone-content { max-width: 500px; }
+    .file-icon { width: 42px; height: 42px; margin: 0 auto 10px; color: var(--blue); }
+    .drop-zone strong { display: block; margin-bottom: 4px; font-size: 15px; }
+    .drop-zone p { margin: 0 0 15px; color: var(--muted); font-size: 12px; }
+    .button { min-height: 40px; padding: 0 15px; border: 0; border-radius: 9px; color: white; background: var(--blue); font-weight: 650; }
+    .button:hover { background: #2d6edc; }
+    .file-name { margin-top: 12px; color: #536783; font-size: 12px; overflow-wrap: anywhere; }
+    .result { margin-top: 18px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; }
+    .result[hidden] { display: none; }
+    .result.warning { color: var(--red); border-color: #f2c5c2; background: var(--red-soft); }
+    .result.success { color: var(--green); border-color: #c3e9d8; background: var(--green-soft); }
+    .result.error { color: var(--orange); border-color: #f0ddb9; background: var(--orange-soft); }
+    .result strong { display: block; margin-bottom: 4px; font-size: 15px; }
+    .result p { margin: 0; font-size: 12px; }
+    .note { margin: 16px 2px 0; color: var(--muted); font-size: 11px; }
+    .auth-backdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px; background: #182b4970; }
+    .auth-card { width: min(400px, 100%); padding: 25px; border: 1px solid var(--line); border-radius: 15px; background: white; box-shadow: 0 20px 70px #0b1d3a40; }
+    .auth-card h2 { margin: 0 0 5px; font-size: 19px; }
+    .auth-card > p { margin: 0 0 17px; color: var(--muted); font-size: 12px; }
+    .auth-field { margin-bottom: 14px; }
+    .auth-field label { display: block; margin-bottom: 6px; color: #52627a; font-size: 11px; font-weight: 650; }
+    .auth-field input { width: 100%; height: 39px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); }
+    .auth-error { margin: 0 0 13px !important; color: var(--red) !important; }
+    .auth-card .button { width: 100%; }
+    [hidden] { display: none !important; }
+    @media (max-width: 650px) {
+      .sidebar { width: 60px; flex-basis: 60px; padding: 20px 8px; }
+      .brand { padding: 0 0 24px; }
+      .brand-copy, .nav-label, .nav-item span { display: none; }
+      .nav-item { justify-content: center; padding: 0; }
+      .main { width: calc(100% - 60px); }
+      .topbar { height: 62px; padding: 0 16px; }
+      .account-status { display: none; }
+      .content { padding: 22px 14px 32px; }
+      .panel { padding: 14px; }
+      .code-fields { grid-template-columns: 1fr; gap: 11px; }
+      .settings-actions { align-items: flex-start; flex-direction: column; gap: 8px; }
+      .drop-zone { min-height: 190px; padding: 18px; }
+      h1 { font-size: 21px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">+</div>
+        <div class="brand-copy">
+          <div class="brand-name">Bed<span>Care</span></div>
+          <div class="brand-caption">Liên Chuyên Khoa</div>
+        </div>
+      </div>
+      <div class="nav-label">TỔNG QUAN</div>
+      <a class="nav-item" href="tong-quan.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg>
+        <span>Tổng quan</span>
+      </a>
+      <a class="nav-item" href="quan-ly-giuong.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 19v-9m0 5h18v4M3 15h18v-3a2 2 0 0 0-2-2h-5v5"/><path d="M7 10h4a3 3 0 0 1 3 3v2H6v-3a2 2 0 0 1 1-2Z"/></svg>
+        <span>Quản lý giường</span>
+      </a>
+      <div class="nav-label" style="margin-top:27px">CÔNG CỤ</div>
+      <a class="nav-item active" href="kiem-tra-xml.html" aria-current="page" aria-label="Kiểm tra XML" title="Kiểm tra XML">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h6M9 14l2 2-2 2m6-4-2 2 2 2"/></svg>
+        <span>Kiểm tra XML</span>
+      </a>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="breadcrumbs">Công cụ <span style="padding:0 7px;color:#bac3cf">/</span> <strong>Kiểm tra XML</strong></div>
+        <div class="top-actions">
+          <span class="account-status" id="accountStatus"></span>
+          <button class="logout-button" id="logoutButton" type="button" hidden>Đăng xuất</button>
+        </div>
+      </header>
+      <div class="content" id="toolContent" hidden>
+        <section class="heading">
+          <h1>Kiểm tra XML</h1>
+          <p>Nhập các mã cần cảnh báo, sau đó chọn tệp XML để kiểm tra trường MA_BAC_SI.</p>
+        </section>
+        <section class="panel" id="codeSettingsPanel" aria-labelledby="codeSettingsHeading">
+          <h2 id="codeSettingsHeading">Danh sách mã cần cảnh báo</h2>
+          <p class="panel-description">Nhập mỗi mã trên một dòng. Công cụ so khớp chính xác với giá trị MA_BAC_SI. Danh sách được lưu trên Supabase để các thiết bị đăng nhập BedCare cùng sử dụng; chỉ Admin được chỉnh sửa.</p>
+          <div class="code-fields">
+            <div class="code-field">
+              <label for="cchnCodes">Mã CCHN</label>
+              <textarea id="cchnCodes" rows="4" placeholder="Ví dụ: CCHN-001&#10;CCHN-002"></textarea>
+            </div>
+            <div class="code-field">
+              <label for="gphnCodes">Mã GPHN</label>
+              <textarea id="gphnCodes" rows="4" placeholder="Ví dụ: GPHN-001&#10;GPHN-002"></textarea>
+            </div>
+          </div>
+          <div class="settings-actions">
+            <button class="button" id="saveCodesButton" type="button">Lưu danh sách mã</button>
+            <button class="secondary-button" id="importLocalCodesButton" type="button" hidden>Nhập mã đã lưu trên thiết bị này</button>
+            <span class="settings-status" id="settingsStatus" role="status" aria-live="polite"></span>
+          </div>
+        </section>
+        <section class="panel" aria-label="Tải tệp XML để kiểm tra">
+          <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-content">
+              <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h6M9 14h6m-6 3h6"/></svg>
+              <strong>Kéo thả tệp XML vào đây</strong>
+              <p>Hoặc chọn tệp từ thiết bị của bạn. Tệp được kiểm tra ngay trên trình duyệt, không tải lên máy chủ.</p>
+              <button class="button" id="chooseFileButton" type="button">Chọn tệp XML</button>
+              <input id="xmlFileInput" type="file" accept=".xml,text/xml,application/xml" hidden>
+              <div class="file-name" id="fileName" hidden></div>
+            </div>
+          </div>
+          <div class="result" id="result" role="status" aria-live="polite" hidden>
+            <strong id="resultTitle"></strong>
+            <p id="resultMessage"></p>
+          </div>
+          <p class="note">Cảnh báo chỉ xuất hiện khi giá trị MA_BAC_SI khớp với mã đã lưu; vui lòng kiểm tra lại hồ sơ và người kê đơn. Công cụ không tự xác định chức danh hay năng lực hành nghề.</p>
+        </section>
+      </div>
+    </main>
+  </div>
+  <div class="auth-backdrop" id="authBackdrop" role="dialog" aria-modal="true" aria-labelledby="authTitle" hidden>
+    <form class="auth-card" id="loginForm">
+      <h2 id="authTitle">Đăng nhập BedCare</h2>
+      <p>Đăng nhập bằng tài khoản BedCare đã được quản trị viên cấp quyền để dùng danh sách mã chung.</p>
+      <div class="auth-field"><label for="loginUsername">Tên đăng nhập hoặc email</label><input id="loginUsername" type="text" autocomplete="username" required></div>
+      <div class="auth-field"><label for="loginPassword">Mật khẩu</label><input id="loginPassword" type="password" autocomplete="current-password" required></div>
+      <p class="auth-error" id="authError" role="alert" hidden></p>
+      <button class="button" id="loginButton" type="submit">Đăng nhập</button>
+    </form>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="bedcare-backend.js"></script>
+  <script>
+    const legacyCodeStorageKey = "bedcare.xml-check.codes.v1";
+    const fileInput = document.getElementById("xmlFileInput");
+    const dropZone = document.getElementById("dropZone");
+    const result = document.getElementById("result");
+    const resultTitle = document.getElementById("resultTitle");
+    const resultMessage = document.getElementById("resultMessage");
+    const fileName = document.getElementById("fileName");
+    const codeSettingsPanel = document.getElementById("codeSettingsPanel");
+    const cchnCodesInput = document.getElementById("cchnCodes");
+    const gphnCodesInput = document.getElementById("gphnCodes");
+    const settingsStatus = document.getElementById("settingsStatus");
+    const importLocalCodesButton = document.getElementById("importLocalCodesButton");
+    const authBackdrop = document.getElementById("authBackdrop");
+    const authError = document.getElementById("authError");
+    let codeLists = { CCHN: [], GPHN: [] };
+    let legacyCodeLists = { CCHN: [], GPHN: [] };
+    let currentMembership = null;
+    let unsubscribeCodeLists = null;
+
+    function parseCodeList(value) {
+      return [...new Set(value.split(/\r?\n/).map(code => code.trim()).filter(Boolean))];
+    }
+
+    function loadLegacyCodeLists() {
+      try {
+        const saved = localStorage.getItem(legacyCodeStorageKey);
+        if (!saved) return { CCHN: [], GPHN: [] };
+        const parsed = JSON.parse(saved);
+        if (!parsed || !Array.isArray(parsed.CCHN) || !Array.isArray(parsed.GPHN) ||
+            !parsed.CCHN.every(code => typeof code === "string") ||
+            !parsed.GPHN.every(code => typeof code === "string")) {
+          throw new Error("Danh sách mã đã lưu không đúng định dạng.");
+        }
+        return { CCHN: parsed.CCHN, GPHN: parsed.GPHN };
+      } catch (error) {
+        console.error("Không thể đọc danh sách mã cũ trên thiết bị:", error);
+        return { CCHN: [], GPHN: [] };
+      }
+    }
+
+    function getCodeListsFromInputs() {
+      return {
+        CCHN: parseCodeList(cchnCodesInput.value),
+        GPHN: parseCodeList(gphnCodesInput.value)
+      };
+    }
+
+    function renderCodeLists() {
+      cchnCodesInput.value = codeLists.CCHN.join("\n");
+      gphnCodesInput.value = codeLists.GPHN.join("\n");
+      const canEdit = currentMembership && currentMembership.role === "admin";
+      codeSettingsPanel.hidden = !canEdit;
+      cchnCodesInput.disabled = !canEdit;
+      gphnCodesInput.disabled = !canEdit;
+      document.getElementById("saveCodesButton").hidden = !canEdit;
+      const hasSharedCodes = codeLists.CCHN.length + codeLists.GPHN.length > 0;
+      const hasLegacyCodes = legacyCodeLists.CCHN.length + legacyCodeLists.GPHN.length > 0;
+      importLocalCodesButton.hidden = !canEdit || hasSharedCodes || !hasLegacyCodes;
+      if (!canEdit) {
+        settingsStatus.textContent = "Chỉ Admin mới được thêm hoặc sửa danh sách mã.";
+      } else {
+        settingsStatus.textContent = hasSharedCodes
+          ? `Danh sách dùng chung: ${codeLists.CCHN.length} mã CCHN, ${codeLists.GPHN.length} mã GPHN.`
+          : "Chưa có mã nào trong danh sách dùng chung.";
+      }
+    }
+
+    async function loadSharedCodeLists() {
+      settingsStatus.classList.remove("error");
+      settingsStatus.textContent = "Đang tải danh sách dùng chung...";
+      try {
+        codeLists = await BedCareBackend.getProviderCodeWatchlist();
+        renderCodeLists();
+      } catch (error) {
+        console.error("Không thể tải danh sách mã dùng chung:", error);
+        settingsStatus.classList.add("error");
+        settingsStatus.textContent = `Không thể tải danh sách dùng chung: ${error.message}. Nếu chưa cài bảng mới, Admin cần chạy lại supabase-schema.sql trong Supabase SQL Editor.`;
+      }
+    }
+
+    async function signInAndLoad() {
+      const membership = await BedCareBackend.getMembership();
+      if (!membership) {
+        throw new Error("Tài khoản chưa được quản trị viên cấp quyền BedCare.");
+      }
+      if (membership.role === "member" && !membership.department) {
+        throw new Error("Tài khoản chưa được gán khoa. Hãy nhờ Admin cập nhật quyền trong mục Cài đặt.");
+      }
+      currentMembership = membership;
+      document.getElementById("accountStatus").textContent = membership.role === "admin"
+        ? "Đã đăng nhập · Admin"
+        : `Đã đăng nhập · ${membership.department}`;
+      document.getElementById("logoutButton").hidden = false;
+      document.getElementById("toolContent").hidden = false;
+      authBackdrop.hidden = true;
+      renderCodeLists();
+      await loadSharedCodeLists();
+      if (unsubscribeCodeLists) unsubscribeCodeLists();
+      unsubscribeCodeLists = BedCareBackend.subscribeToProviderCodeWatchlist(
+        () => loadSharedCodeLists(),
+        error => {
+          console.error("Không thể đồng bộ danh sách mã:", error);
+          settingsStatus.classList.add("error");
+          settingsStatus.textContent = error.message;
+        }
+      );
+    }
+
+    function showAuthError(error) {
+      console.error("Không thể đăng nhập hoặc tải danh sách mã:", error);
+      authError.textContent = error.message;
+      authError.hidden = false;
+    }
+
+    async function initializeBackend() {
+      try {
+        BedCareBackend.getClient();
+        const { session } = await BedCareBackend.getSession();
+        if (session) {
+          await signInAndLoad();
+        } else {
+          authBackdrop.hidden = false;
+        }
+      } catch (error) {
+        authBackdrop.hidden = false;
+        showAuthError(error);
+      }
+    }
+
+    function showResult(type, title, message) {
+      result.className = `result ${type}`;
+      resultTitle.textContent = title;
+      resultMessage.textContent = message;
+      result.hidden = false;
+    }
+
+    async function checkXmlFile(file) {
+      fileName.textContent = file.name;
+      fileName.hidden = false;
+      result.hidden = true;
+
+      if (!file.name.toLocaleLowerCase("vi").endsWith(".xml")) {
+        showResult("error", "Tệp không hợp lệ", "Vui lòng chọn tệp có phần mở rộng .xml.");
+        return;
+      }
+
+      try {
+        const xmlText = await file.text();
+        const documentXml = new DOMParser().parseFromString(xmlText, "application/xml");
+        const parserErrors = documentXml.getElementsByTagName("parsererror");
+        if (parserErrors.length > 0 || (documentXml.documentElement && documentXml.documentElement.localName === "parsererror")) {
+          showResult("error", "XML không hợp lệ", "Không thể đọc tệp vì cấu trúc XML bị lỗi. Vui lòng kiểm tra lại tệp.");
+          return;
+        }
+
+        const providerCodeFields = Array.from(documentXml.getElementsByTagName("*"))
+          .filter(element => element.localName.toLocaleUpperCase("vi") === "MA_BAC_SI");
+        const providerCodeValues = providerCodeFields
+          .map(element => element.textContent.trim())
+          .filter(Boolean);
+        if (!providerCodeValues.length) {
+          showResult("error", "Chưa có dữ liệu để kiểm tra", "Không tìm thấy dữ liệu trong trường MA_BAC_SI của tệp XML.");
+          return;
+        }
+
+        const configuredCodes = Object.entries(codeLists).flatMap(([type, codes]) =>
+          codes.map(code => ({ code, type }))
+        );
+        if (!configuredCodes.length) {
+          showResult("error", "Chưa có danh sách mã", "Nhập và lưu ít nhất một mã CCHN hoặc GPHN trước khi kiểm tra tệp.");
+          return;
+        }
+
+        const matchedCodes = configuredCodes.filter(({ code }) =>
+          providerCodeValues.some(value => value.toLocaleUpperCase("vi") === code.toLocaleUpperCase("vi"))
+        );
+        if (matchedCodes.length) {
+          const matches = matchedCodes.map(({ code, type }) => `${type}: ${code}`);
+          showResult("warning", "Không phải bác sĩ mà lên thuốc", `Tìm thấy mã đã đăng ký trong MA_BAC_SI (${matches.join(", ")}). Vui lòng rà soát lại người kê đơn.`);
+          return;
+        }
+
+        showResult("success", "Không phát hiện mã cần cảnh báo", "Tệp XML hợp lệ; không tìm thấy giá trị MA_BAC_SI nào trùng với danh sách mã đã lưu.");
+      } catch (error) {
+        console.error("Không thể đọc tệp XML:", error);
+        showResult("error", "Không thể đọc tệp", "Đã xảy ra lỗi khi đọc tệp XML. Vui lòng thử chọn lại tệp.");
+      }
+    }
+
+    document.getElementById("saveCodesButton").addEventListener("click", async () => {
+      const button = document.getElementById("saveCodesButton");
+      button.disabled = true;
+      settingsStatus.classList.remove("error");
+      settingsStatus.textContent = "Đang lưu danh sách lên Supabase...";
+      try {
+        const updatedCodes = getCodeListsFromInputs();
+        await BedCareBackend.saveProviderCodeWatchlist(updatedCodes);
+        codeLists = updatedCodes;
+        renderCodeLists();
+        settingsStatus.textContent = `Đã lưu dùng chung ${codeLists.CCHN.length} mã CCHN và ${codeLists.GPHN.length} mã GPHN.`;
+      } catch (error) {
+        console.error("Không thể lưu danh sách mã dùng chung:", error);
+        settingsStatus.classList.add("error");
+        settingsStatus.textContent = `Không thể lưu danh sách: ${error.message}`;
+      } finally {
+        button.disabled = false;
+      }
+    });
+    importLocalCodesButton.addEventListener("click", async () => {
+      cchnCodesInput.value = legacyCodeLists.CCHN.join("\n");
+      gphnCodesInput.value = legacyCodeLists.GPHN.join("\n");
+      document.getElementById("saveCodesButton").click();
+    });
+    document.getElementById("chooseFileButton").addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", event => {
+      const [file] = event.target.files;
+      if (file) checkXmlFile(file);
+    });
+
+    dropZone.addEventListener("dragover", event => {
+      event.preventDefault();
+      dropZone.classList.add("dragging");
+    });
+    dropZone.addEventListener("dragleave", event => {
+      if (!dropZone.contains(event.relatedTarget)) dropZone.classList.remove("dragging");
+    });
+    dropZone.addEventListener("drop", event => {
+      event.preventDefault();
+      dropZone.classList.remove("dragging");
+      const [file] = event.dataTransfer.files;
+      if (file) checkXmlFile(file);
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const loginButton = document.getElementById("loginButton");
+      authError.hidden = true;
+      loginButton.disabled = true;
+      try {
+        await BedCareBackend.signIn(
+          document.getElementById("loginUsername").value.trim(),
+          document.getElementById("loginPassword").value
+        );
+        await signInAndLoad();
+      } catch (error) {
+        showAuthError(error);
+      } finally {
+        loginButton.disabled = false;
+      }
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      try {
+        if (unsubscribeCodeLists) unsubscribeCodeLists();
+        unsubscribeCodeLists = null;
+        await BedCareBackend.signOut();
+        currentMembership = null;
+        codeLists = { CCHN: [], GPHN: [] };
+        document.getElementById("toolContent").hidden = true;
+        document.getElementById("logoutButton").hidden = true;
+        document.getElementById("accountStatus").textContent = "";
+        authBackdrop.hidden = false;
+      } catch (error) {
+        console.error("Không thể đăng xuất:", error);
+        settingsStatus.classList.add("error");
+        settingsStatus.textContent = `Không thể đăng xuất: ${error.message}`;
+      }
+    });
+
+    legacyCodeLists = loadLegacyCodeLists();
+    initializeBackend();
+  </script>
+</body>
+</html>

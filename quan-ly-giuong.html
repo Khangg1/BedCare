@@ -215,6 +215,16 @@
     .page-panel + .page-panel { margin-top: 16px; }
     .page-panel-title { margin: 0 0 4px; font-size: 15px; }
     .page-panel-subtitle { margin: 0 0 17px; color: var(--muted); font-size: 11px; }
+    .import-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .import-file-input { max-width: 100%; color: #64758d; font-size: 11px; }
+    .import-status { margin-top: 12px; color: var(--muted); font-size: 11px; }
+    .import-status.error { color: #b94343; }
+    .import-preview { max-height: 340px; margin-top: 14px; overflow: auto; border: 1px solid var(--line); border-radius: 9px; }
+    .import-preview .data-table { min-width: 760px; }
+    .import-preview .data-table th, .import-preview .data-table td { padding: 8px 10px; }
+    .import-preview select { min-width: 130px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); background: white; font: inherit; }
+    .import-row-error { color: #b94343 !important; }
+    .import-row-duplicate { color: #9c671b !important; }
     .overview-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
     .overview-stat { padding: 17px 18px; border: 1px solid var(--line); border-radius: 12px; background: white; box-shadow: var(--shadow); }
     .overview-stat-label { color: var(--muted); font-size: 11px; }
@@ -340,6 +350,10 @@
       <a class="nav-item his-link" href="https://yte-khanhhoa.vnpthis.vn/" target="_blank" rel="noopener noreferrer" aria-label="Mở hệ thống HIS trong tab mới" title="Mở hệ thống HIS">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg>
         <span>HIS</span>
+      </a>
+      <a class="nav-item" href="kiem-tra-xml.html" aria-label="Mở công cụ kiểm tra XML" title="Kiểm tra XML">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v6h6M9 14l2 2-2 2m6-4-2 2 2 2"/></svg>
+        <span>Kiểm tra XML</span>
       </a>
       <div class="nav-label" style="margin-top:27px">HỆ THỐNG</div>
       <button class="nav-item" type="button" data-nav="settings">
@@ -480,6 +494,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="supabase-config.js"></script>
   <script src="bedcare-backend.js"></script>
   <script>
@@ -501,6 +516,8 @@
     let currentUserDepartment = null;
     let currentUserId = null;
     let authMode = "login";
+    let admissionImportRows = [];
+    let admissionImportStatus = "";
 
     function loadBeds() {
       try {
@@ -697,10 +714,276 @@
       return `<tr data-bed-code="${escapeHtml(bed.code)}" data-room="${escapeHtml(bed.room || "")}" data-search="${escapeHtml(`${patient} ${bed.code} ${bed.department} ${bed.room || ""}`.toLocaleLowerCase("vi"))}"><td class="table-primary">${escapeHtml(patient)}</td><td>${escapeHtml(bed.code)} (${typeLabels[bed.type]})</td><td>${escapeHtml(bed.department)}</td><td>${escapeHtml(bed.room || "—")}</td><td><span class="datetime-highlight">${escapeHtml(formatDateTime(admittedAt, bed.since || "—"))}</span></td><td><span class="datetime-highlight">${escapeHtml(formatDateTime(dischargedAt, "—"))}</span></td><td>${escapeHtml(formatStayDuration({ ...bed, admittedAt, dischargedAt }))}</td><td><span class="badge ${bed.status}">${statusLabels[bed.status]}</span></td></tr>`;
     }
 
+    function normalizeExcelHeader(value) {
+      return String(value || "")
+        .trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/gi, "d")
+        .toLocaleUpperCase("vi")
+        .replace(/[^A-Z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
+    }
+
+    function makeImportedDate(year, month, day, hour = 0, minute = 0, second = 0) {
+      const date = new Date(year, month - 1, day, hour, minute, second);
+      if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day ||
+          date.getHours() !== hour || date.getMinutes() !== minute || date.getSeconds() !== second) {
+        return null;
+      }
+      return date.toISOString();
+    }
+
+    function parseImportedExcelDate(value) {
+      if (value instanceof Date && !Number.isNaN(value.getTime())) {
+        return makeImportedDate(
+          value.getFullYear(), value.getMonth() + 1, value.getDate(),
+          value.getHours(), value.getMinutes(), value.getSeconds()
+        );
+      }
+      if (typeof value === "number" && Number.isFinite(value) && window.XLSX) {
+        const parts = XLSX.SSF.parse_date_code(value);
+        if (parts) return makeImportedDate(parts.y, parts.m, parts.d, parts.H, parts.M, Math.floor(parts.S));
+        return null;
+      }
+      if (typeof value !== "string" || !value.trim()) return null;
+      const text = value.trim();
+      const localDate = /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/.exec(text);
+      if (localDate) {
+        return makeImportedDate(
+          Number(localDate[3]), Number(localDate[2]), Number(localDate[1]),
+          Number(localDate[4] || 0), Number(localDate[5] || 0), Number(localDate[6] || 0)
+        );
+      }
+      const isoDate = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)?$/.exec(text);
+      if (isoDate) {
+        if (/[zZ]|[+-]\d{2}:?\d{2}$/.test(text)) {
+          const date = new Date(text);
+          return Number.isNaN(date.getTime()) ? null : date.toISOString();
+        }
+        return makeImportedDate(
+          Number(isoDate[1]), Number(isoDate[2]), Number(isoDate[3]),
+          Number(isoDate[4] || 0), Number(isoDate[5] || 0), Number(isoDate[6] || 0)
+        );
+      }
+      const parsed = new Date(text);
+      return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+    }
+
+    function isDuplicateAdmission(row) {
+      const importedDate = new Date(row.admittedAt).getTime();
+      const matchesAdmission = admission =>
+        admission.patientName.trim().toLocaleLowerCase("vi") === row.patientName.toLocaleLowerCase("vi") &&
+        admission.bedCode.trim().toLocaleLowerCase("vi") === row.bedCode.toLocaleLowerCase("vi") &&
+        (admission.room || "").trim().toLocaleLowerCase("vi") === row.room.toLocaleLowerCase("vi") &&
+        new Date(admission.admittedAt).getTime() === importedDate;
+      return admissionHistory.some(matchesAdmission) || admissionImportRows.some(candidate =>
+        candidate !== row && candidate.sourceRow < row.sourceRow && !candidate.errors.length &&
+        matchesAdmission(candidate)
+      );
+    }
+
+    function updateAdmissionImportSummary() {
+      const status = document.getElementById("admissionImportStatus");
+      const importButton = document.getElementById("importAdmissionsButton");
+      if (!status || !importButton || !admissionImportRows.length) return;
+      const invalidRows = admissionImportRows.filter(row => row.errors.length);
+      const unassignedRows = admissionImportRows.filter(row => !row.errors.length && !row.department);
+      const duplicates = admissionImportRows.filter(row =>
+        !row.errors.length && row.department && isDuplicateAdmission(row)
+      );
+      const readyRows = admissionImportRows.filter(row =>
+        !row.errors.length && row.department && !isDuplicateAdmission(row)
+      );
+      const messages = [`${admissionImportRows.length} dòng dữ liệu`];
+      if (readyRows.length) messages.push(`${readyRows.length} dòng sẵn sàng nhập`);
+      if (unassignedRows.length) messages.push(`${unassignedRows.length} dòng cần chọn khoa`);
+      if (duplicates.length) messages.push(`${duplicates.length} dòng trùng lịch sử hiện có, sẽ bỏ qua`);
+      if (invalidRows.length) messages.push(`${invalidRows.length} dòng lỗi, cần sửa file`);
+      status.textContent = messages.join(" · ");
+      status.classList.toggle("error", invalidRows.length > 0);
+      importButton.disabled = readyRows.length === 0 || invalidRows.length > 0 || unassignedRows.length > 0;
+    }
+
+    function renderAdmissionImportPreview() {
+      const preview = document.getElementById("admissionImportPreview");
+      if (!preview) return;
+      if (!admissionImportRows.length) {
+        preview.hidden = true;
+        preview.replaceChildren();
+        return;
+      }
+
+      preview.hidden = false;
+      preview.innerHTML = `
+        <table class="data-table">
+          <thead><tr><th>DÒNG</th><th>HỌ VÀ TÊN</th><th>TÊN GIƯỜNG</th><th>PHÒNG</th><th>NGÀY VÀO</th><th>NGÀY RA</th><th>KHOA</th><th>TRẠNG THÁI</th></tr></thead>
+          <tbody>${admissionImportRows.map((row, index) => {
+            const duplicate = !row.errors.length && row.department && isDuplicateAdmission(row);
+            const departmentControl = row.department
+              ? escapeHtml(row.department)
+              : `<select data-import-department="${index}" aria-label="Chọn khoa cho dòng ${row.sourceRow}"><option value="">Chọn khoa</option>${departments.map(department => `<option value="${escapeHtml(department)}">${escapeHtml(department)}</option>`).join("")}</select>`;
+            const rowStatus = row.errors.length
+              ? row.errors.join("; ")
+              : duplicate ? "Đã có trong lịch sử, sẽ bỏ qua" : row.department ? "Sẵn sàng" : "Cần chọn khoa";
+            const rowStatusClass = row.errors.length ? "import-row-error" : duplicate ? "import-row-duplicate" : "";
+            return `<tr>
+              <td>${row.sourceRow}</td>
+              <td>${escapeHtml(row.patientName || "—")}</td>
+              <td>${escapeHtml(row.bedCode || "—")}</td>
+              <td>${escapeHtml(row.room || "—")}</td>
+              <td>${escapeHtml(row.admittedAt ? formatDateTime(row.admittedAt) : "—")}</td>
+              <td>${escapeHtml(row.dischargedAt ? formatDateTime(row.dischargedAt) : "—")}</td>
+              <td>${departmentControl}</td>
+              <td class="${rowStatusClass}">${escapeHtml(rowStatus)}</td>
+            </tr>`;
+          }).join("")}</tbody>
+        </table>`;
+      updateAdmissionImportSummary();
+    }
+
+    async function readAdmissionExcel(file) {
+      admissionImportRows = [];
+      admissionImportStatus = "Đang đọc file Excel...";
+      renderAdmissionImportPreview();
+      const status = document.getElementById("admissionImportStatus");
+      if (status) {
+        status.textContent = admissionImportStatus;
+        status.classList.remove("error");
+      }
+      try {
+        if (!window.XLSX) throw new Error("Không tải được thư viện đọc Excel. Kiểm tra Internet rồi tải lại trang.");
+        const workbook = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: true });
+        if (!workbook.SheetNames.length) throw new Error("File Excel không có trang tính.");
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const values = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: true, defval: "", blankrows: false });
+        const headerIndex = values.findIndex(row => row.some(value => String(value).trim()));
+        if (headerIndex < 0) throw new Error("Trang tính không có dữ liệu.");
+        const headers = values[headerIndex].map(normalizeExcelHeader);
+        const requiredHeaders = ["HO_VA_TEN", "NGAY_VAO", "NGAY_RA", "TEN_GIUONG", "PHONG"];
+        const missingHeaders = requiredHeaders.filter(header => !headers.includes(header));
+        if (missingHeaders.length) {
+          throw new Error(`Thiếu cột: ${missingHeaders.join(", ")}. Tải mẫu Excel để xem tên cột chuẩn.`);
+        }
+        const columnIndexes = Object.fromEntries(requiredHeaders.map(header => [header, headers.indexOf(header)]));
+        const dataRows = values.slice(headerIndex + 1);
+        for (let index = 0; index < dataRows.length; index += 1) {
+          const valuesRow = dataRows[index];
+          if (!valuesRow.some(value => String(value).trim())) continue;
+          const patientName = String(valuesRow[columnIndexes.HO_VA_TEN] || "").trim();
+          const bedCode = String(valuesRow[columnIndexes.TEN_GIUONG] || "").trim();
+          const room = String(valuesRow[columnIndexes.PHONG] || "").trim();
+          const admittedValue = valuesRow[columnIndexes.NGAY_VAO];
+          const dischargedValue = valuesRow[columnIndexes.NGAY_RA];
+          const admittedAt = parseImportedExcelDate(admittedValue);
+          const dischargedAt = String(dischargedValue).trim() ? parseImportedExcelDate(dischargedValue) : null;
+          const errors = [];
+          if (!patientName) errors.push("Thiếu họ và tên");
+          if (!bedCode) errors.push("Thiếu tên giường");
+          if (!admittedAt) errors.push("Ngày vào không hợp lệ");
+          if (String(dischargedValue).trim() && !dischargedAt) errors.push("Ngày ra không hợp lệ");
+          if (admittedAt && dischargedAt && new Date(dischargedAt) < new Date(admittedAt)) {
+            errors.push("Ngày ra trước ngày vào");
+          }
+          const bedMatches = beds.filter(bed =>
+            bed.code.trim().toLocaleLowerCase("vi") === bedCode.toLocaleLowerCase("vi") &&
+            (bed.room || "").trim().toLocaleLowerCase("vi") === room.toLocaleLowerCase("vi")
+          );
+          const matchingDepartments = [...new Set(bedMatches.map(bed => bed.department))];
+          admissionImportRows.push({
+            sourceRow: headerIndex + index + 2,
+            patientName,
+            bedCode,
+            room,
+            admittedAt,
+            dischargedAt,
+            department: matchingDepartments.length === 1 ? matchingDepartments[0] : "",
+            errors
+          });
+        }
+        if (!admissionImportRows.length) throw new Error("Không có dòng bệnh nhân nào bên dưới hàng tiêu đề.");
+        admissionImportStatus = "";
+        renderAdmissionImportPreview();
+      } catch (error) {
+        console.error("Không thể đọc file Excel lịch sử bệnh nhân:", error);
+        admissionImportRows = [];
+        admissionImportStatus = `Không thể đọc file Excel: ${error.message}`;
+        if (status) {
+          status.textContent = admissionImportStatus;
+          status.classList.add("error");
+        }
+        renderAdmissionImportPreview();
+      }
+    }
+
+    function downloadAdmissionTemplate() {
+      if (!window.XLSX) {
+        showToast("Không tải được thư viện tạo file Excel. Kiểm tra Internet rồi tải lại trang.");
+        return;
+      }
+      const worksheet = XLSX.utils.aoa_to_sheet([
+        ["HỌ VÀ TÊN", "NGÀY VÀO", "NGÀY RA", "TÊN GIƯỜNG", "PHÒNG"],
+        ["", "", "", "", ""]
+      ]);
+      worksheet["!cols"] = [{ wch: 28 }, { wch: 16 }, { wch: 16 }, { wch: 20 }, { wch: 18 }];
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Lịch sử bệnh nhân");
+      XLSX.writeFile(workbook, "mau-nhap-lich-su-benh-nhan.xlsx");
+    }
+
+    async function importAdmissionHistory() {
+      if (currentUserRole !== "admin") {
+        showToast("Chỉ Admin mới được nhập lịch sử bệnh nhân.");
+        return;
+      }
+      updateAdmissionImportSummary();
+      const rowsToImport = admissionImportRows.filter(row =>
+        !row.errors.length && row.department && !isDuplicateAdmission(row)
+      );
+      if (!rowsToImport.length) {
+        showToast("Không có dòng mới hợp lệ để nhập.");
+        return;
+      }
+      const button = document.getElementById("importAdmissionsButton");
+      if (!window.confirm(`Nhập ${rowsToImport.length} lượt vào lịch sử bệnh nhân? Dữ liệu giường hiện tại sẽ không thay đổi.`)) return;
+      button.disabled = true;
+      try {
+        const importedCount = await BedCareBackend.importPatientAdmissions(rowsToImport);
+        admissionImportRows = [];
+        admissionImportStatus = `Đã nhập ${importedCount} lượt vào lịch sử bệnh nhân.`;
+      } catch (error) {
+        console.error("Không thể nhập lịch sử bệnh nhân:", error);
+        showToast(`Không thể nhập lịch sử bệnh nhân: ${error.message}`);
+        updateAdmissionImportSummary();
+        return;
+      }
+      try {
+        await loadRemoteBeds();
+        showToast(admissionImportStatus);
+      } catch (error) {
+        console.error("Đã nhập lịch sử nhưng không thể tải lại dữ liệu:", error);
+        showToast(`${admissionImportStatus} Không thể làm mới danh sách: ${error.message}. Hãy tải lại trang.`);
+        const status = document.getElementById("admissionImportStatus");
+        if (status) status.textContent = `${admissionImportStatus} Không thể làm mới danh sách: ${error.message}.`;
+      }
+    }
+
     function renderPatients() {
       const patients = beds.flatMap(bed => bedPatients(bed).map(patient => ({ bed, patient })));
       return `
-        <section class="page-heading"><div><h1>Bệnh nhân</h1><p>Danh sách bệnh nhân đang được sắp xếp giường tại ${escapeHtml(departmentScopeText())}.</p></div><button class="primary-button" type="button" data-action="open-beds">Quản lý giường</button></section>
+        <section class="page-heading"><div><h1>Bệnh nhân</h1><p>Danh sách bệnh nhân đang được sắp xếp giường tại ${escapeHtml(departmentScopeText())}.</p></div><div><button class="primary-button" type="button" data-action="open-beds">Quản lý giường</button></div></section>
+        ${currentUserRole === "admin" ? `
+        <section class="panel page-panel">
+          <h2 class="page-panel-title">Nhập lịch sử từ Excel</h2>
+          <p class="page-panel-subtitle">Mỗi dòng được thêm vào lịch sử nằm viện; không thay đổi bệnh nhân hoặc trạng thái giường hiện tại. Dùng sheet đầu tiên với các cột: HỌ VÀ TÊN, NGÀY VÀO, NGÀY RA, TÊN GIƯỜNG, PHÒNG. Ngày nhập theo định dạng ô Excel hoặc DD/MM/YYYY; NGÀY RA có thể để trống. File được đọc trong trình duyệt và chỉ gửi lên Supabase khi bạn xác nhận nhập.</p>
+          <div class="import-actions">
+            <input class="import-file-input" id="admissionExcelFile" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" aria-label="Chọn file Excel lịch sử bệnh nhân">
+            <button class="secondary-button" type="button" data-action="download-admission-template">Tải mẫu Excel</button>
+            <button class="primary-button" id="importAdmissionsButton" type="button" data-action="import-admissions" disabled>Nhập vào lịch sử</button>
+          </div>
+          <div class="import-status" id="admissionImportStatus" role="status" aria-live="polite">${escapeHtml(admissionImportStatus || "Chọn tệp Excel để xem trước dữ liệu trước khi nhập.")}</div>
+          <div class="import-preview" id="admissionImportPreview" hidden></div>
+        </section>` : ""}
         <section class="panel page-panel">
           <h2 class="page-panel-title">Bệnh nhân đang điều trị</h2><p class="page-panel-subtitle">Chọn một dòng để cập nhật giường hoặc thông tin bệnh nhân.</p>
           <div class="table-tools"><label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="patientSearch" type="search" placeholder="Tìm tên bệnh nhân, giường, phòng..." aria-label="Tìm bệnh nhân"></label><span class="result-count">${patients.length} bệnh nhân</span></div>
@@ -1409,6 +1692,14 @@
         return;
       }
       const action = event.target.closest("[data-action]")?.dataset.action;
+      if (action === "download-admission-template") {
+        downloadAdmissionTemplate();
+        return;
+      }
+      if (action === "import-admissions") {
+        await importAdmissionHistory();
+        return;
+      }
       if (action === "open-beds") {
         navigate("beds");
         return;
@@ -1426,6 +1717,21 @@
       }
     });
     document.getElementById("otherPage").addEventListener("change", event => {
+      if (event.target.id === "admissionExcelFile") {
+        const [file] = event.target.files;
+        if (file) readAdmissionExcel(file);
+        event.target.value = "";
+        return;
+      }
+      const importDepartment = event.target.closest("[data-import-department]");
+      if (importDepartment) {
+        const row = admissionImportRows[Number(importDepartment.dataset.importDepartment)];
+        if (row) {
+          row.department = importDepartment.value;
+          renderAdmissionImportPreview();
+        }
+        return;
+      }
       const roleSelect = event.target.closest("[data-member-role]");
       if (roleSelect) {
         const departmentField = document.querySelector(`[data-member-department-field="${CSS.escape(roleSelect.dataset.memberRole)}"]`);
